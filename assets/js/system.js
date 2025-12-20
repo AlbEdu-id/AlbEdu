@@ -1,1269 +1,830 @@
-// =============================================
-// ALBYTE GUARD v1.1 - SYSTEM.JS LENGKAP
-// =============================================
-console.log('🚀 AlByte Guard v1.1 - Sistem Proteksi AlbEdu...');
+// AlbEdu - AlByte Guard (Level 3) - Version 1.1
+// Sistem Proteksi & Profile Management
+// Advanced Edition with Real-time Profile System
+
+console.log('🚀 Memuat AlByte Guard 1.1 - Sistem AlbEdu Terbaru...');
 
 // =======================
-// CONFIGURATION
-// =======================
-const SYSTEM_CONFIG = {
-    version: '1.1.0',
-    debug: true,
-    defaultRole: 'siswa',
-    profileRequired: true,
-    avatarCount: 6,
-    maxFileSize: 5 * 1024 * 1024, // 5MB
-    allowedImageTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-};
-
-// =======================
-// GLOBAL STATE
+// Global State
 // =======================
 let currentUser = null;
 let userRole = null;
 let userData = null;
 let authReady = false;
-let profilePanelOpen = false;
-let userListener = null;
-let profileFormData = {};
+let profileListener = null;
 
 // =======================
-// ROLE PERMISSIONS
-// =======================
-const ROLE_PERMISSIONS = {
-    admin: {
-        routes: ['/', '/login', '/admin', '/admin/creates', '/admin/panel', '/ujian'],
-        features: ['all']
-    },
-    siswa: {
-        routes: ['/', '/login', '/siswa', '/ujian'],
-        features: ['profile', 'exams', 'results']
-    }
-};
-
-// =======================
-// DEFAULT AVATARS
+// Constants
 // =======================
 const DEFAULT_AVATARS = [
-    'https://avatars.dicebear.com/api/identicon/albyte.svg?background=%23000000&color=%235b6af0',
-    'https://avatars.dicebear.com/api/identicon/student.svg?background=%23000000&color=%2310b981',
-    'https://avatars.dicebear.com/api/identicon/albedu.svg?background=%23000000&color=%239d4edd',
-    'https://avatars.dicebear.com/api/identicon/avatar1.svg?background=%23000000&color=%23f59e0b',
-    'https://avatars.dicebear.com/api/identicon/avatar2.svg?background=%23000000&color=%23ef4444',
-    'https://avatars.dicebear.com/api/identicon/avatar3.svg?background=%23000000&color=%230ea5e9'
+    {
+        id: 'github',
+        name: 'GitHub Identicon',
+        url: null, // Will be generated based on email
+        color: '#1f2937'
+    },
+    {
+        id: 'male1',
+        name: 'Male Avatar',
+        url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=male1&backgroundColor=5b6af0',
+        color: '#5b6af0'
+    },
+    {
+        id: 'female1',
+        name: 'Female Avatar',
+        url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=female1&backgroundColor=9d4edd',
+        color: '#9d4edd'
+    },
+    {
+        id: 'robot',
+        name: 'Robot',
+        url: 'https://api.dicebear.com/7.x/bottts/svg?seed=robot&backgroundColor=10b981',
+        color: '#10b981'
+    },
+    {
+        id: 'cat',
+        name: 'Cat',
+        url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=cat&backgroundColor=f59e0b',
+        color: '#f59e0b'
+    },
+    {
+        id: 'alien',
+        name: 'Alien',
+        url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alien&backgroundColor=8b5cf6',
+        color: '#8b5cf6'
+    }
 ];
 
 // =======================
-// UTILITY FUNCTIONS
+// Profile State
+// =======================
+let profileState = {
+    isProfileComplete: false,
+    selectedAvatar: null,
+    customAvatar: null,
+    tempName: '',
+    isLoading: false,
+    hasChanges: false
+};
+
+// =======================
+// Core Utilities
 // =======================
 function getBasePath() {
-    const path = window.location.pathname;
-    const parts = path.split('/').filter(p => p);
-    return parts.length > 0 ? '/' + parts[0] : '';
+    const parts = window.location.pathname.split('/');
+    return `/${parts[1]}`;
 }
 
 function isLoginPage() {
     const path = window.location.pathname;
-    const loginPatterns = ['/login', '/login.html', '/index.html'];
-    return loginPatterns.some(pattern => path.includes(pattern));
+    return path.includes('login') || path.endsWith('/');
 }
 
-function normalizePath(path) {
-    let normalized = path.replace('.html', '').replace('.php', '');
-    const base = getBasePath();
-    if (normalized.startsWith(base)) {
-        normalized = normalized.substring(base.length);
-    }
-    return normalized || '/';
-}
-
-function log(message, type = 'info') {
-    if (!SYSTEM_CONFIG.debug) return;
-    
-    const styles = {
-        info: 'color: #5b6af0;',
-        success: 'color: #10b981;',
-        warning: 'color: #f59e0b;',
-        error: 'color: #ef4444;',
-        system: 'color: #9d4edd; font-weight: bold;'
-    };
-    
-    console.log(`%c[ALBYTE] ${message}`, styles[type] || styles.info);
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+function generateGitHubAvatar(email) {
+    const hash = email.split('').reduce((acc, char) => {
+        return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0);
+    return `https://github.com/identicons/${Math.abs(hash)}.png`;
 }
 
 // =======================
-// UI COMPONENTS
+// Loading System
 // =======================
-function showAuthLoading(text = 'Memproses...') {
-    let el = document.getElementById('authLoading');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'authLoading';
-        el.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(15px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        `;
-        el.innerHTML = `
-            <div style="position: relative;">
-                <div style="
-                    width: 80px;
-                    height: 80px;
-                    border: 3px solid rgba(255,255,255,0.1);
-                    border-radius: 50%;
-                    position: relative;
-                    margin-bottom: 30px;
-                ">
-                    <div style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        border: 3px solid transparent;
-                        border-top-color: #5b6af0;
-                        border-radius: 50%;
-                        animation: spin 1.2s cubic-bezier(0.19, 1, 0.22, 1) infinite;
-                    "></div>
-                    <div style="
-                        position: absolute;
-                        top: 10px;
-                        left: 10px;
-                        width: 60px;
-                        height: 60px;
-                        border: 3px solid transparent;
-                        border-top-color: #9d4edd;
-                        border-radius: 50%;
-                        animation: spin 1.5s cubic-bezier(0.19, 1, 0.22, 1) infinite reverse;
-                    "></div>
-                </div>
-                <p style="font-size: 1.2rem; opacity: 0.9; margin: 0; text-align: center;"></p>
-                <p style="font-size: 0.9rem; opacity: 0.6; margin-top: 10px;">AlByte Guard v${SYSTEM_CONFIG.version}</p>
-            </div>
-        `;
-        document.body.appendChild(el);
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+function showAuthLoading(text = 'Memverifikasi sesi login…') {
+    const el = document.getElementById('loadingIndicator');
+    if (!el) return;
     
     el.style.display = 'flex';
     const p = el.querySelector('p');
     if (p) p.textContent = text;
-    log(text, 'system');
+    
+    console.log('[AUTH]', text);
 }
 
 function hideAuthLoading() {
-    const el = document.getElementById('authLoading');
-    if (el) {
-        el.style.opacity = '0';
-        setTimeout(() => {
-            el.style.display = 'none';
-            el.style.opacity = '1';
-        }, 300);
-    }
-}
-
-function showSuccess(message, duration = 3000) {
-    let el = document.getElementById('successToast');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'successToast';
-        el.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(34, 197, 94, 0.95);
-            backdrop-filter: blur(20px);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(34, 197, 94, 0.4);
-            z-index: 10001;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            max-width: 400px;
-            animation: slideUpBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        `;
-        document.body.appendChild(el);
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideUpBounce {
-                0% {
-                    opacity: 0;
-                    transform: translateX(-50%) translateY(30px);
-                }
-                70% {
-                    transform: translateX(-50%) translateY(-10px);
-                }
-                100% {
-                    opacity: 1;
-                    transform: translateX(-50%) translateY(0);
-                }
-            }
-            @keyframes checkmark {
-                0% { transform: scale(0); }
-                70% { transform: scale(1.2); }
-                100% { transform: scale(1); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    el.innerHTML = `
-        <div style="
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: checkmark 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17L4 12" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <span>${message}</span>
-    `;
-    
-    el.style.display = 'flex';
-    el.style.animation = 'slideUpBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    
-    setTimeout(() => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateX(-50%) translateY(10px)';
-        setTimeout(() => {
-            el.style.display = 'none';
-            el.style.opacity = '1';
-            el.style.transform = 'translateX(-50%) translateY(0)';
-        }, 300);
-    }, duration);
-    
-    log(`Success: ${message}`, 'success');
-}
-
-function showError(message, duration = 5000) {
-    let el = document.getElementById('errorToast');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'errorToast';
-        el.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(239, 68, 68, 0.95);
-            backdrop-filter: blur(20px);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.4);
-            z-index: 10001;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            max-width: 400px;
-            animation: slideInRight 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        `;
-        document.body.appendChild(el);
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from {
-                    opacity: 0;
-                    transform: translateX(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-            @keyframes errorShake {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-5px); }
-                75% { transform: translateX(5px); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    el.innerHTML = `
-        <div style="
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: errorShake 0.5s ease;
-        ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                      stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </div>
-        <span>${message}</span>
-    `;
-    
-    el.style.display = 'flex';
-    el.style.animation = 'slideInRight 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-    
-    setTimeout(() => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateX(10px)';
-        setTimeout(() => {
-            el.style.display = 'none';
-            el.style.opacity = '1';
-            el.style.transform = 'translateX(0)';
-        }, 300);
-    }, duration);
-    
-    log(`Error: ${message}`, 'error');
-}
-
-function showWarning(message) {
-    let el = document.getElementById('warningToast');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'warningToast';
-        el.style.cssText = `
-            position: fixed;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(245, 158, 11, 0.95);
-            backdrop-filter: blur(20px);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.4);
-            z-index: 10001;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            max-width: 400px;
-            animation: slideDown 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        `;
-        document.body.appendChild(el);
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideDown {
-                from {
-                    opacity: 0;
-                    transform: translateX(-50%) translateY(-30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(-50%) translateY(0);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    el.innerHTML = `
-        <div style="
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 9V11M12 15H12.01M10.29 3.86L1.82 18C1.64538 18.3024 1.55299 18.6453 1.552 18.9945C1.55101 19.3437 1.64146 19.6871 1.81445 19.9905C1.98744 20.2939 2.23675 20.5467 2.53773 20.7238C2.83871 20.9009 3.18082 20.9961 3.53 21H20.47C20.8192 20.9961 21.1613 20.9009 21.4623 20.7238C21.7633 20.5467 22.0126 20.2939 22.1856 19.9905C22.3585 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5318 3.5661 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3437 2.89725 12 2.89725C11.6563 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4682 3.5661 10.29 3.86Z" 
-                      stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <span>${message}</span>
-    `;
-    
-    el.style.display = 'flex';
-    el.style.animation = 'slideDown 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-    
-    setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => {
-            el.style.display = 'none';
-            el.style.opacity = '1';
-        }, 300);
-    }, 5000);
-    
-    log(`Warning: ${message}`, 'warning');
+    const el = document.getElementById('loadingIndicator');
+    if (!el) return;
+    el.style.display = 'none';
 }
 
 // =======================
-// INITIALIZATION SYSTEM
+// Profile Completeness Check
 // =======================
-async function initializeSystem() {
-    log('Initializing AlByte Guard v1.1...', 'system');
-    showAuthLoading('Memulai sistem keamanan...');
+function checkProfileCompleteness(data) {
+    if (!data) return false;
     
-    // Check Firebase availability
-    if (typeof firebaseAuth === 'undefined') {
-        log('Firebase not ready, waiting...', 'warning');
-        setTimeout(initializeSystem, 1000);
+    const hasName = data.nama && data.nama.trim().length > 0;
+    const hasAvatar = data.foto_profil && data.foto_profil.trim().length > 0;
+    
+    return hasName && hasAvatar;
+}
+
+// =======================
+// Profile Button System
+// =======================
+function createProfileButton() {
+    // Remove existing button if any
+    const existing = document.querySelector('.profile-button-container');
+    if (existing) existing.remove();
+    
+    // Create container
+    const container = document.createElement('div');
+    container.className = 'profile-button-container';
+    
+    // Create button
+    const button = document.createElement('button');
+    button.className = 'profile-button';
+    button.id = 'profileTrigger';
+    button.innerHTML = `
+        <img src="${userData?.foto_profil || generateGitHubAvatar(currentUser.email)}" 
+             alt="Profile" 
+             class="profile-image"
+             onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=6b7280'">
+    `;
+    
+    // Add indicator if profile incomplete
+    if (!profileState.isProfileComplete) {
+        const indicator = document.createElement('div');
+        indicator.className = 'profile-indicator';
+        indicator.textContent = '!';
+        indicator.title = 'Profil belum lengkap';
+        button.appendChild(indicator);
+    }
+    
+    // Add click event
+    button.addEventListener('click', showProfilePanel);
+    
+    container.appendChild(button);
+    document.body.appendChild(container);
+}
+
+function updateProfileButton() {
+    const button = document.getElementById('profileTrigger');
+    if (!button) return;
+    
+    const img = button.querySelector('.profile-image');
+    if (img && userData?.foto_profil) {
+        img.src = userData.foto_profil;
+    }
+    
+    // Update indicator
+    const indicator = button.querySelector('.profile-indicator');
+    if (profileState.isProfileComplete) {
+        if (indicator) indicator.remove();
+    } else {
+        if (!indicator) {
+            const newIndicator = document.createElement('div');
+            newIndicator.className = 'profile-indicator';
+            newIndicator.textContent = '!';
+            newIndicator.title = 'Profil belum lengkap';
+            button.appendChild(newIndicator);
+        }
+    }
+}
+
+// =======================
+// Profile Panel System
+// =======================
+function createProfilePanel() {
+    // Remove existing panel if any
+    const existing = document.getElementById('profilePanel');
+    if (existing) existing.remove();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'profile-overlay';
+    overlay.id = 'profileOverlay';
+    
+    // Create panel
+    const panel = document.createElement('div');
+    panel.className = 'profile-panel';
+    panel.id = 'profilePanel';
+    
+    panel.innerHTML = `
+        <div class="profile-header">
+            <h2>${profileState.isProfileComplete ? 'Profil Saya' : 'Lengkapi Profil'}</h2>
+            <button class="close-profile" id="closeProfile">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="profile-content">
+            <div class="current-profile">
+                <img src="${userData?.foto_profil || generateGitHubAvatar(currentUser.email)}" 
+                     alt="Current Avatar" 
+                     class="current-avatar"
+                     onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=6b7280'">
+                <div class="current-name">${userData?.nama || currentUser.displayName || 'Nama belum diisi'}</div>
+            </div>
+            
+            <div class="edit-section">
+                <div class="name-input-group">
+                    <label for="profileName">Nama Lengkap</label>
+                    <input type="text" 
+                           id="profileName" 
+                           class="name-input" 
+                           placeholder="Masukkan nama lengkap"
+                           value="${userData?.nama || ''}">
+                </div>
+                
+                <div class="avatar-options">
+                    <div class="option-title">Pilih Avatar</div>
+                    <div class="option-grid" id="avatarOptions"></div>
+                    
+                    <div class="custom-upload">
+                        <label class="upload-label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Unggah Foto Sendiri
+                            <input type="file" 
+                                   id="avatarUpload" 
+                                   class="upload-input" 
+                                   accept="image/*">
+                        </label>
+                        
+                        <div class="preview-container" id="previewContainer">
+                            <div class="preview-title">Pratinjau:</div>
+                            <img class="preview-image" id="previewImage">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-message" id="statusMessage"></div>
+                
+                <div class="profile-actions">
+                    <button class="save-btn" id="saveProfile" disabled>
+                        <span id="saveText">Simpan Perubahan</span>
+                        <span class="save-loading" id="saveLoading">
+                            <span class="spinner"></span>
+                            Menyimpan...
+                        </span>
+                    </button>
+                    <button class="cancel-btn" id="cancelEdit">Batal</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    
+    // Initialize panel components
+    initializeProfilePanel();
+}
+
+function initializeProfilePanel() {
+    // Populate avatar options
+    populateAvatarOptions();
+    
+    // Setup event listeners
+    document.getElementById('closeProfile').addEventListener('click', hideProfilePanel);
+    document.getElementById('cancelEdit').addEventListener('click', hideProfilePanel);
+    document.getElementById('profileOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'profileOverlay') hideProfilePanel();
+    });
+    
+    // Name input listener
+    const nameInput = document.getElementById('profileName');
+    nameInput.addEventListener('input', () => {
+        profileState.tempName = nameInput.value.trim();
+        checkForChanges();
+    });
+    
+    // Avatar upload listener
+    const uploadInput = document.getElementById('avatarUpload');
+    uploadInput.addEventListener('change', handleAvatarUpload);
+    
+    // Save button listener
+    document.getElementById('saveProfile').addEventListener('click', saveProfile);
+    
+    // Initialize state
+    profileState.tempName = userData?.nama || '';
+    checkForChanges();
+}
+
+function populateAvatarOptions() {
+    const container = document.getElementById('avatarOptions');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    DEFAULT_AVATARS.forEach(avatar => {
+        const option = document.createElement('div');
+        option.className = 'avatar-option';
+        option.dataset.id = avatar.id;
+        
+        if (avatar.id === 'github') {
+            const githubUrl = generateGitHubAvatar(currentUser.email);
+            option.innerHTML = `
+                <img src="${githubUrl}" 
+                     alt="${avatar.name}"
+                     onerror="this.parentElement.innerHTML='<div class=\\'option-label\\'>${avatar.name}</div>'">
+            `;
+        } else {
+            option.innerHTML = `<img src="${avatar.url}" alt="${avatar.name}">`;
+        }
+        
+        // Check if this is current avatar
+        if (userData?.foto_profil) {
+            const currentUrl = userData.foto_profil;
+            if (avatar.id === 'github' && currentUrl.includes('github.com/identicons/')) {
+                option.classList.add('selected');
+                profileState.selectedAvatar = 'github';
+            } else if (currentUrl === avatar.url) {
+                option.classList.add('selected');
+                profileState.selectedAvatar = avatar.id;
+            }
+        }
+        
+        option.addEventListener('click', () => selectAvatar(avatar.id));
+        container.appendChild(option);
+    });
+}
+
+function selectAvatar(avatarId) {
+    profileState.selectedAvatar = avatarId;
+    profileState.customAvatar = null;
+    
+    // Update UI
+    document.querySelectorAll('.avatar-option').forEach(opt => {
+        opt.classList.remove('selected');
+        if (opt.dataset.id === avatarId) {
+            opt.classList.add('selected');
+        }
+    });
+    
+    // Clear preview
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    previewContainer.classList.remove('active');
+    previewImage.src = '';
+    
+    checkForChanges();
+}
+
+async function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+        showStatus('Hanya file gambar yang diperbolehkan', 'error');
+        return;
+    }
+    
+    if (file.size > 2 * 1024 * 1024) { // 2MB
+        showStatus('Ukuran gambar maksimal 2MB', 'error');
         return;
     }
     
     try {
-        // Setup auth state listener
-        firebaseAuth.onAuthStateChanged(handleAuthStateChange);
-    } catch (error) {
-        log(`Initialization error: ${error.message}`, 'error');
-        showError('Gagal memulai sistem');
-        hideAuthLoading();
-    }
-}
-
-async function handleAuthStateChange(user) {
-    try {
-        if (user) {
-            await handleAuthenticatedUser(user);
-        } else {
-            await handleUnauthenticatedUser();
-        }
-    } catch (error) {
-        log(`Auth state error: ${error.message}`, 'error');
-        showError('Kesalahan sistem autentikasi');
-        hideAuthLoading();
-    }
-}
-
-async function handleAuthenticatedUser(user) {
-    log(`User authenticated: ${user.email}`, 'success');
-    currentUser = user;
-    
-    showAuthLoading('Memuat data pengguna...');
-    await fetchUserData(user.uid);
-    
-    // Setup real-time listener
-    setupUserDataListener(user.uid);
-    
-    // Delay for stability
-    await sleep(500);
-    
-    showAuthLoading('Memverifikasi akses...');
-    await checkPageAccess();
-    
-    authReady = true;
-    hideAuthLoading();
-    
-    // Initialize profile system for siswa
-    if (userRole === 'siswa' && window.location.pathname.includes('/siswa')) {
-        await initializeProfileSystem();
-    }
-    
-    log('System ready', 'success');
-}
-
-async function handleUnauthenticatedUser() {
-    log('User not authenticated', 'warning');
-    currentUser = null;
-    userRole = null;
-    userData = null;
-    authReady = true;
-    
-    // Cleanup listeners
-    if (userListener) {
-        userListener();
-        userListener = null;
-    }
-    
-    hideAuthLoading();
-    
-    if (!isLoginPage()) {
-        redirectToLogin();
-    }
-}
-
-// =======================
-// USER DATA MANAGEMENT
-// =======================
-async function fetchUserData(userId) {
-    try {
-        log(`Fetching user data for: ${userId}`, 'info');
-        const docRef = firebaseDb.collection('users').doc(userId);
-        const docSnap = await docRef.get();
-        
-        if (docSnap.exists) {
-            userData = docSnap.data();
-            userRole = userData.peran || SYSTEM_CONFIG.defaultRole;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            profileState.customAvatar = e.target.result;
+            profileState.selectedAvatar = 'custom';
             
-            // Calculate profile completeness
-            userData.profileComplete = calculateProfileCompleteness(userData);
+            // Update UI
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
             
-            log(`User role: ${userRole}, Profile complete: ${userData.profileComplete}`, 'info');
-        } else {
-            log('User data not found, creating...', 'warning');
-            await createUserData(userId);
-            await fetchUserData(userId); // Recursive call to get new data
-        }
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            previewImage.src = e.target.result;
+            previewContainer.classList.add('active');
+            
+            checkForChanges();
+        };
+        reader.readAsDataURL(file);
     } catch (error) {
-        log(`Error fetching user data: ${error.message}`, 'error');
-        throw error;
+        showStatus('Gagal membaca file', 'error');
+        console.error('Upload error:', error);
     }
 }
 
-function calculateProfileCompleteness(data) {
-    if (!data) return false;
+function checkForChanges() {
+    const nameChanged = profileState.tempName !== (userData?.nama || '');
     
-    const requiredFields = ['nama', 'nis', 'kelas', 'foto_profil'];
-    let completed = 0;
+    let avatarChanged = false;
+    if (profileState.selectedAvatar === 'custom' && profileState.customAvatar) {
+        avatarChanged = profileState.customAvatar !== userData?.foto_profil;
+    } else if (profileState.selectedAvatar === 'github') {
+        const githubUrl = generateGitHubAvatar(currentUser.email);
+        avatarChanged = githubUrl !== userData?.foto_profil;
+    } else if (profileState.selectedAvatar) {
+        const selected = DEFAULT_AVATARS.find(a => a.id === profileState.selectedAvatar);
+        avatarChanged = selected?.url !== userData?.foto_profil;
+    }
     
-    requiredFields.forEach(field => {
-        if (data[field] && data[field].trim().length > 0) {
-            completed++;
-        }
-    });
+    profileState.hasChanges = nameChanged || avatarChanged;
     
-    return completed === requiredFields.length;
-}
-
-async function createUserData(userId) {
-    const user = firebaseAuth.currentUser;
-    const randomAvatar = DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
-    
-    const userData = {
-        id: userId,
-        nama: user.displayName || '',
-        email: user.email,
-        foto_profil: user.photoURL || randomAvatar,
-        peran: SYSTEM_CONFIG.defaultRole,
-        profilLengkap: false,
-        profileComplete: false,
-        kelas: '',
-        nis: '',
-        telepon: '',
-        alamat: '',
-        stats: {
-            ujian_diikuti: 0,
-            nilai_rata: 0,
-            ranking: 0,
-            last_active: new Date().toISOString()
-        },
-        preferences: {
-            theme: 'dark',
-            notifications: true,
-            language: 'id'
-        },
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    try {
-        await firebaseDb.collection('users').doc(userId).set(userData);
-        log('New user data created successfully', 'success');
-    } catch (error) {
-        log(`Error creating user data: ${error.message}`, 'error');
-        throw error;
+    const saveBtn = document.getElementById('saveProfile');
+    if (saveBtn) {
+        saveBtn.disabled = !profileState.hasChanges || profileState.isLoading;
     }
 }
 
-function setupUserDataListener(userId) {
-    // Cleanup existing listener
-    if (userListener) {
-        userListener();
-    }
+function showProfilePanel() {
+    const overlay = document.getElementById('profileOverlay');
+    const panel = document.getElementById('profilePanel');
     
-    userListener = firebaseDb.collection('users').doc(userId)
-        .onSnapshot((doc) => {
-            if (doc.exists) {
-                const newData = doc.data();
-                const oldComplete = userData?.profileComplete;
-                const oldRole = userData?.peran;
-                
-                userData = newData;
-                userData.profileComplete = calculateProfileCompleteness(newData);
-                userRole = newData.peran || userRole;
-                
-                // Update UI if profile status changed
-                if (oldComplete !== userData.profileComplete) {
-                    updateProfileBadge();
-                    
-                    if (profilePanelOpen) {
-                        updateProfilePanel();
-                    }
-                }
-                
-                // Handle role change
-                if (oldRole !== userRole) {
-                    log(`Role changed from ${oldRole} to ${userRole}`, 'warning');
-                    checkPageAccess();
-                }
-                
-                log('User data updated in real-time', 'info');
-            }
-        }, (error) => {
-            log(`User data listener error: ${error.message}`, 'error');
-        });
-}
-
-// =======================
-// PROFILE SYSTEM
-// =======================
-async function initializeProfileSystem() {
-    log('Initializing profile system...', 'system');
-    
-    // Load CSS if not already loaded
-    loadProfileCSS();
-    
-    // Wait for DOM to be ready
-    await sleep(100);
-    
-    // Create profile badge
-    if (!document.getElementById('profileBadge')) {
-        createProfileBadge();
-    }
-    
-    // Create profile panel
-    if (!document.getElementById('profilePanel')) {
+    if (!overlay || !panel) {
         createProfilePanel();
+        setTimeout(() => {
+            document.getElementById('profileOverlay').classList.add('active');
+            document.getElementById('profilePanel').classList.add('active');
+        }, 10);
+    } else {
+        overlay.classList.add('active');
+        setTimeout(() => panel.classList.add('active'), 10);
     }
     
-    // Initialize form data
-    profileFormData = {
-        nama: userData?.nama || '',
-        nis: userData?.nis || '',
-        kelas: userData?.kelas || '',
-        foto_profil: userData?.foto_profil || DEFAULT_AVATARS[0]
-    };
+    // Reset form
+    const nameInput = document.getElementById('profileName');
+    if (nameInput) {
+        nameInput.value = userData?.nama || '';
+        profileState.tempName = userData?.nama || '';
+    }
     
-    updateProfileBadge();
-    log('Profile system ready', 'success');
+    // Clear status
+    showStatus('', '');
+    checkForChanges();
 }
 
-function loadProfileCSS() {
-    if (document.getElementById('profile-css')) return;
+function hideProfilePanel() {
+    const overlay = document.getElementById('profileOverlay');
+    const panel = document.getElementById('profilePanel');
+    
+    if (panel) panel.classList.remove('active');
+    if (overlay) {
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            // Reset upload
+            const uploadInput = document.getElementById('avatarUpload');
+            if (uploadInput) uploadInput.value = '';
+        }, 300);
+    }
+}
+
+function showStatus(message, type) {
+    const statusEl = document.getElementById('statusMessage');
+    if (!statusEl) return;
+    
+    statusEl.textContent = message;
+    statusEl.className = 'status-message';
+    
+    if (type === 'success') {
+        statusEl.classList.add('status-success');
+        statusEl.style.display = 'block';
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 3000);
+    } else if (type === 'error') {
+        statusEl.classList.add('status-error');
+        statusEl.style.display = 'block';
+    } else {
+        statusEl.style.display = 'none';
+    }
+}
+
+async function saveProfile() {
+    if (profileState.isLoading || !profileState.hasChanges) return;
+    
+    try {
+        profileState.isLoading = true;
+        updateSaveButtonState();
+        
+        // Prepare update data
+        const updates = {};
+        
+        // Update name if changed
+        if (profileState.tempName && profileState.tempName !== userData?.nama) {
+            updates.nama = profileState.tempName.trim();
+        }
+        
+        // Update avatar if changed
+        let newAvatarUrl = userData?.foto_profil;
+        
+        if (profileState.selectedAvatar === 'custom' && profileState.customAvatar) {
+            newAvatarUrl = profileState.customAvatar;
+        } else if (profileState.selectedAvatar === 'github') {
+            newAvatarUrl = generateGitHubAvatar(currentUser.email);
+        } else if (profileState.selectedAvatar) {
+            const selected = DEFAULT_AVATARS.find(a => a.id === profileState.selectedAvatar);
+            newAvatarUrl = selected?.url;
+        }
+        
+        if (newAvatarUrl && newAvatarUrl !== userData?.foto_profil) {
+            updates.foto_profil = newAvatarUrl;
+        }
+        
+        // Check if profile is now complete
+        const willBeComplete = checkProfileCompleteness({
+            ...userData,
+            ...updates
+        });
+        
+        updates.profilLengkap = willBeComplete;
+        updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // Save to Firestore
+        await firebaseDb.collection('users').doc(currentUser.uid).update(updates);
+        
+        // Update local state
+        userData = { ...userData, ...updates };
+        profileState.isProfileComplete = willBeComplete;
+        profileState.hasChanges = false;
+        
+        // Update UI
+        updateProfileButton();
+        showStatus('Profil berhasil diperbarui!', 'success');
+        
+        // Update panel display
+        const currentAvatar = document.querySelector('.current-avatar');
+        const currentName = document.querySelector('.current-name');
+        
+        if (currentAvatar && updates.foto_profil) {
+            currentAvatar.src = updates.foto_profil;
+        }
+        if (currentName && updates.nama) {
+            currentName.textContent = updates.nama;
+        }
+        
+        // Auto close if profile is now complete and this was first time
+        if (willBeComplete && !userData.profilLengkap) {
+            setTimeout(() => {
+                hideProfilePanel();
+            }, 1500);
+        }
+        
+    } catch (error) {
+        console.error('Save profile error:', error);
+        showStatus('Gagal menyimpan perubahan: ' + error.message, 'error');
+    } finally {
+        profileState.isLoading = false;
+        updateSaveButtonState();
+    }
+}
+
+function updateSaveButtonState() {
+    const saveBtn = document.getElementById('saveProfile');
+    const saveText = document.getElementById('saveText');
+    const saveLoading = document.getElementById('saveLoading');
+    
+    if (!saveBtn) return;
+    
+    saveBtn.disabled = !profileState.hasChanges || profileState.isLoading;
+    
+    if (profileState.isLoading) {
+        saveText.style.display = 'none';
+        saveLoading.classList.add('active');
+    } else {
+        saveText.style.display = 'inline';
+        saveLoading.classList.remove('active');
+    }
+}
+
+// =======================
+// CSS Injection
+// =======================
+function injectProfileCSS() {
+    if (document.querySelector('link[href*="profile.css"]')) return;
     
     const link = document.createElement('link');
-    link.id = 'profile-css';
     link.rel = 'stylesheet';
     link.href = `${getBasePath()}/assets/css/profile.css`;
+    link.id = 'profile-css';
     
-    link.onload = () => log('Profile CSS loaded', 'success');
+    // Fallback if CSS fails to load
     link.onerror = () => {
-        log('Failed to load profile CSS, using fallback', 'warning');
-        // Could add inline CSS fallback here
+        console.warn('Profile CSS failed to load, using inline styles');
+        const style = document.createElement('style');
+        style.textContent = `
+            .profile-button-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+            .profile-button { width: 56px; height: 56px; border-radius: 50%; background: #333; border: none; cursor: pointer; }
+            .profile-indicator { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; background: red; border-radius: 50%; color: white; }
+        `;
+        document.head.appendChild(style);
     };
     
     document.head.appendChild(link);
 }
 
-function createProfileBadge() {
-    const badge = document.createElement('div');
-    badge.id = 'profileBadge';
-    badge.className = 'profile-badge';
-    badge.innerHTML = `
-        <div class="profile-btn" onclick="toggleProfilePanel()">
-            <img id="profileBadgeImage" 
-                 src="${userData?.foto_profil || DEFAULT_AVATARS[0]}" 
-                 alt="Profile"
-                 onerror="this.src='${DEFAULT_AVATARS[0]}'">
-            <div class="profile-indicator" id="profileIndicator">!</div>
-        </div>
-    `;
-    document.body.appendChild(badge);
+// =======================
+// User Data Management
+// =======================
+async function fetchUserData(userId) {
+    console.log('📡 Mengambil data user dari Firestore...');
     
-    log('Profile badge created', 'info');
-}
-
-function updateProfileBadge() {
-    const badgeImg = document.getElementById('profileBadgeImage');
-    const indicator = document.getElementById('profileIndicator');
-    
-    if (!badgeImg || !indicator) return;
-    
-    // Update image
-    const avatarUrl = userData?.foto_profil || DEFAULT_AVATARS[0];
-    badgeImg.src = avatarUrl;
-    
-    // Update indicator
-    if (SYSTEM_CONFIG.profileRequired && !userData?.profileComplete) {
-        indicator.style.display = 'flex';
-        indicator.title = 'Lengkapi profil Anda!';
-    } else {
-        indicator.style.display = 'none';
+    // Set up real-time listener
+    if (profileListener) {
+        profileListener(); // Unsubscribe previous listener
     }
     
-    // Add pulse animation for incomplete profile
-    if (!userData?.profileComplete) {
-        badgeImg.style.animation = 'avatarGlow 3s ease-in-out infinite alternate';
-    } else {
-        badgeImg.style.animation = '';
-    }
-}
-
-function createProfilePanel() {
-    const panelContainer = document.createElement('div');
-    panelContainer.id = 'profilePanel';
-    panelContainer.className = 'profile-panel-container';
+    const ref = firebaseDb.collection('users').doc(userId);
     
-    const profileComplete = userData?.profileComplete || false;
-    const warningHtml = !profileComplete ? `
-        <div class="warning-badge">
-            <span class="warning-badge-icon">⚠️</span>
-            <span class="warning-badge-text">Lengkapi profil untuk akses penuh!</span>
-        </div>
-    ` : '';
-    
-    panelContainer.innerHTML = `
-        <div class="profile-panel-backdrop" onclick="closeProfilePanel()"></div>
-        <div class="profile-panel">
-            ${warningHtml}
-            
-            <div class="profile-header">
-                <div class="profile-avatar-container">
-                    <img id="profilePanelAvatar" class="profile-avatar" 
-                         src="${userData?.foto_profil || DEFAULT_AVATARS[0]}" 
-                         alt="Profile"
-                         onerror="this.src='${DEFAULT_AVATARS[0]}'">
-                    <div class="avatar-edit-btn" onclick="openAvatarEditor()" title="Edit foto profil">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                    </div>
-                </div>
-                <h2 class="profile-name" id="profilePanelName">${userData?.nama || 'Belum diisi'}</h2>
-                <p class="profile-email">${currentUser?.email || ''}</p>
-            </div>
-            
-            <div class="profile-stats">
-                <div class="stat-card">
-                    <div class="stat-value">${userData?.stats?.ujian_diikuti || 0}</div>
-                    <div class="stat-label">Ujian Diikuti</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${userData?.stats?.nilai_rata || 0}</div>
-                    <div class="stat-label">Nilai Rata-rata</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">#${userData?.stats?.ranking || 0}</div>
-                    <div class="stat-label">Ranking</div>
-                </div>
-            </div>
-            
-            <form class="profile-form" id="profileForm" onsubmit="updateProfile(event)">
-                <div class="form-group">
-                    <label class="form-label">Nama Lengkap *</label>
-                    <input type="text" class="form-input" id="profileName" 
-                           value="${userData?.nama || ''}" 
-                           placeholder="Masukkan nama lengkap" required>
-                </div>
+    profileListener = ref.onSnapshot(async (snap) => {
+        try {
+            if (snap.exists) {
+                userData = snap.data();
+                userRole = userData.peran || 'siswa';
                 
-                <div class="form-group">
-                    <label class="form-label">Nomor Induk Siswa (NIS) *</label>
-                    <input type="text" class="form-input" id="profileNIS" 
-                           value="${userData?.nis || ''}" 
-                           placeholder="Masukkan NIS" required>
-                </div>
+                // Check profile completeness
+                profileState.isProfileComplete = checkProfileCompleteness(userData);
                 
-                <div class="form-group">
-                    <label class="form-label">Kelas *</label>
-                    <input type="text" class="form-input" id="profileKelas" 
-                           value="${userData?.kelas || ''}" 
-                           placeholder="Contoh: XII IPA 1" required>
-                </div>
-                
-                <div class="photo-options" id="avatarOptions" style="display: none;">
-                    <div class="photo-options-title">Pilih Foto Profil</div>
-                    <div class="photo-options-grid" id="avatarGrid">
-                        <!-- Avatar options will be populated dynamically -->
-                    </div>
-                    <div class="custom-photo-upload">
-                        <label class="upload-btn">
-                            <span>📷 Upload Foto Sendiri</span>
-                            <input type="file" id="photoUpload" accept="image/*" 
-                                   onchange="handlePhotoUpload(event)">
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="profile-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeProfilePanel()">
-                        Batal
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="saveProfileBtn">
-                        <span class="loading-spinner" style="display: none;"></span>
-                        Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </div>
-    `;
-    
-    document.body.appendChild(panelContainer);
-    log('Profile panel created', 'info');
-}
-
-function toggleProfilePanel() {
-    if (profilePanelOpen) {
-        closeProfilePanel();
-    } else {
-        openProfilePanel();
-    }
-}
-
-function openProfilePanel() {
-    const panel = document.getElementById('profilePanel');
-    if (!panel) return;
-    
-    panel.style.display = 'block';
-    setTimeout(() => {
-        panel.style.opacity = '1';
-        profilePanelOpen = true;
-        
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
-        
-        // Populate avatar options
-        populateAvatarOptions();
-        
-        // Update form with current data
-        updateProfileForm();
-        
-        log('Profile panel opened', 'info');
-    }, 10);
-}
-
-function closeProfilePanel() {
-    const panel = document.getElementById('profilePanel');
-    if (!panel) return;
-    
-    panel.style.opacity = '0';
-    setTimeout(() => {
-        panel.style.display = 'none';
-        profilePanelOpen = false;
-        
-        // Restore body scroll
-        document.body.style.overflow = '';
-        
-        // Hide avatar options
-        const avatarOptions = document.getElementById('avatarOptions');
-        if (avatarOptions) avatarOptions.style.display = 'none';
-        
-        log('Profile panel closed', 'info');
-    }, 300);
-}
-
-function updateProfileForm() {
-    if (!userData) return;
-    
-    document.getElementById('profileName').value = userData.nama || '';
-    document.getElementById('profileNIS').value = userData.nis || '';
-    document.getElementById('profileKelas').value = userData.kelas || '';
-    
-    // Update panel avatar and name
-    const panelAvatar = document.getElementById('profilePanelAvatar');
-    const panelName = document.getElementById('profilePanelName');
-    
-    if (panelAvatar) panelAvatar.src = userData.foto_profil || DEFAULT_AVATARS[0];
-    if (panelName) panelName.textContent = userData.nama || 'Belum diisi';
-}
-
-function populateAvatarOptions() {
-    const avatarGrid = document.getElementById('avatarGrid');
-    if (!avatarGrid) return;
-    
-    avatarGrid.innerHTML = '';
-    
-    DEFAULT_AVATARS.forEach((avatar, index) => {
-        const isCurrent = avatar === (userData?.foto_profil || DEFAULT_AVATARS[0]);
-        const option = document.createElement('div');
-        option.className = `photo-option ${isCurrent ? 'active' : ''}`;
-        option.onclick = () => selectAvatar(avatar);
-        option.innerHTML = `<img src="${avatar}" alt="Avatar ${index + 1}" 
-                               onerror="this.src='${DEFAULT_AVATARS[0]}'">`;
-        avatarGrid.appendChild(option);
-    });
-    
-    log('Avatar options populated', 'info');
-}
-
-function selectAvatar(avatarUrl) {
-    const currentAvatar = document.getElementById('profilePanelAvatar');
-    const badgeAvatar = document.getElementById('profileBadgeImage');
-    
-    if (currentAvatar) {
-        currentAvatar.src = avatarUrl;
-        currentAvatar.onerror = () => {
-            currentAvatar.src = DEFAULT_AVATARS[0];
-        };
-    }
-    
-    if (badgeAvatar) {
-        badgeAvatar.src = avatarUrl;
-        badgeAvatar.onerror = () => {
-            badgeAvatar.src = DEFAULT_AVATARS[0];
-        };
-    }
-    
-    // Update active state
-    document.querySelectorAll('.photo-option').forEach(option => {
-        const img = option.querySelector('img');
-        option.classList.toggle('active', img.src === avatarUrl);
-    });
-    
-    // Update form data
-    profileFormData.foto_profil = avatarUrl;
-    
-    log('Avatar selected', 'info');
-}
-
-function openAvatarEditor() {
-    const avatarOptions = document.getElementById('avatarOptions');
-    if (avatarOptions) {
-        avatarOptions.style.display = 'block';
-        avatarOptions.style.animation = 'formSlideUp 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
-    }
-}
-
-async function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Validate file
-    if (!SYSTEM_CONFIG.allowedImageTypes.includes(file.type)) {
-        showError('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
-        return;
-    }
-    
-    if (file.size > SYSTEM_CONFIG.maxFileSize) {
-        showError(`Ukuran file maksimal ${SYSTEM_CONFIG.maxFileSize / 1024 / 1024}MB`);
-        return;
-    }
-    
-    try {
-        showAuthLoading('Mengupload foto...');
-        
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const base64Image = e.target.result;
-            
-            // Update preview immediately
-            const currentAvatar = document.getElementById('profilePanelAvatar');
-            const badgeAvatar = document.getElementById('profileBadgeImage');
-            
-            if (currentAvatar) currentAvatar.src = base64Image;
-            if (badgeAvatar) badgeAvatar.src = base64Image;
-            
-            try {
-                // Upload to Firebase Storage
-                const storageRef = firebase.storage().ref();
-                const user = firebaseAuth.currentUser;
-                const timestamp = Date.now();
-                const fileName = `profile_photos/${user.uid}_${timestamp}.jpg`;
-                const fileRef = storageRef.child(fileName);
-                
-                // Convert base64 to blob
-                const response = await fetch(base64Image);
-                const blob = await response.blob();
-                
-                // Upload with metadata
-                const metadata = {
-                    contentType: 'image/jpeg',
-                    customMetadata: {
-                        uploadedBy: user.uid,
-                        uploadedAt: timestamp.toString()
-                    }
-                };
-                
-                await fileRef.put(blob, metadata);
-                const downloadURL = await fileRef.getDownloadURL();
-                
-                // Update user data
-                await firebaseDb.collection('users').doc(user.uid).update({
-                    foto_profil: downloadURL,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                console.log('✅ Data user diperbarui:', { 
+                    role: userRole, 
+                    name: userData.nama,
+                    profileComplete: profileState.isProfileComplete 
                 });
                 
-                // Update form data
-                profileFormData.foto_profil = downloadURL;
+                // Update UI if user is logged in
+                if (currentUser) {
+                    updateProfileButton();
+                    
+                    // Update panel if it's open
+                    if (document.getElementById('profilePanel')) {
+                        const currentAvatar = document.querySelector('.current-avatar');
+                        const currentName = document.querySelector('.current-name');
+                        
+                        if (currentAvatar) {
+                            currentAvatar.src = userData.foto_profil || generateGitHubAvatar(currentUser.email);
+                        }
+                        if (currentName) {
+                            currentName.textContent = userData.nama || 'Nama belum diisi';
+                        }
+                    }
+                }
                 
-                hideAuthLoading();
-                showSuccess('Foto profil berhasil diupload!');
-                
-                log('Profile photo uploaded', 'success');
-            } catch (uploadError) {
-                hideAuthLoading();
-                showError('Gagal mengupload foto. Coba lagi.');
-                log(`Upload error: ${uploadError.message}`, 'error');
-                
-                // Revert to previous avatar
-                if (currentAvatar) currentAvatar.src = userData?.foto_profil || DEFAULT_AVATARS[0];
-                if (badgeAvatar) badgeAvatar.src = userData?.foto_profil || DEFAULT_AVATARS[0];
+            } else {
+                console.log('📝 Data user belum ada, membuat data baru...');
+                await createUserData(userId);
             }
-        };
-        
-        reader.readAsDataURL(file);
-    } catch (error) {
-        hideAuthLoading();
-        showError('Terjadi kesalahan saat memproses foto');
-        log(`Photo processing error: ${error.message}`, 'error');
-    }
+        } catch (error) {
+            console.error('Error in user data listener:', error);
+        }
+    }, (error) => {
+        console.error('Firestore listener error:', error);
+    });
 }
 
-async function updateProfile(event) {
-    event.preventDefault();
+async function createUserData(userId) {
+    const user = firebaseAuth.currentUser;
     
-    const saveBtn = document.getElementById('saveProfileBtn');
-    const spinner = saveBtn.querySelector('.loading-spinner');
-    const btnText = saveBtn.querySelector('span:not(.loading-spinner)');
+    const payload = {
+        id: userId,
+        nama: user.displayName || '',
+        email: user.email,
+        foto_profil: generateGitHubAvatar(user.email),
+        peran: 'siswa',
+        profilLengkap: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
     
-    try {
-        // Get form values
-        const name = document.getElementById('profileName').value.trim();
-        const nis = document.getElementById('profileNIS').value.trim();
-        const kelas = document.getElementById('profileKelas').value.trim();
-        const currentAvatar = document.getElementById('profilePanelAvatar').src;
-        
-        // Validate
-        if (!name || !nis || !kelas) {
-            showError('Harap isi semua field yang diperlukan');
-            return;
-        }
-        
-        // Update form data
-        profileFormData = {
-            nama: name,
-            nis: nis,
-            kelas: kelas,
-            foto_profil: currentAvatar
-        };
-        
-        // Show loading state
-        saveBtn.disabled = true;
-        spinner.style.display = 'inline-block';
-        btnText.textContent = 'Menyimpan...';
-        
-        // Check if profile is now complete
-        const isProfileComplete = !!name && !!nis && !!kelas && !!currentAvatar;
-        
-        // Prepare update data
-        const updateData = {
-            nama: name,
-            nis: nis,
-            kelas: kelas,
-            foto_profil: currentAvatar,
-            profilLengkap: isProfileComplete,
-            profileComplete: isProfileComplete,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        // Add stats if first time
-        if (!userData?.stats) {
-            updateData.stats = {
-                ujian_diikuti: 0,
-                nilai_rata: 0,
-                ranking: 0,
-                last_active: new Date().toISOString()
-            };
-        }
-        
-        // Update Firestore
-        await firebaseDb.collection('users').doc(currentUser.uid).update(updateData);
-        
-        // Update local data
-        userData = { ...userData, ...updateData };
-        
-        // Update UI
-        updateProfileBadge();
-        updateProfilePanel();
-        
-        // Show success
-        showSuccess('Profil berhasil diperbarui!');
-        
-        // Close panel after delay
-        setTimeout(() => {
-            closeProfilePanel();
-        }, 1500);
-        
-        log('Profile updated successfully', 'success');
-        
-    } catch (error) {
-        console.error('[PROFILE] Update error:', error);
-        showError('Gagal menyimpan profil. Coba lagi.');
-        log(`Profile update error: ${error.message}`, 'error');
-    } finally {
-        // Reset button state
-        saveBtn.disabled = false;
-        spinner.style.display = 'none';
-        btnText.textContent = 'Simpan Perubahan';
-    }
-}
-
-function updateProfilePanel() {
-    const nameElement = document.getElementById('profilePanelName');
-    const avatarElement = document.getElementById('profilePanelAvatar');
-    const badgeAvatar = document.getElementById('profileBadgeImage');
-    
-    if (nameElement && userData) {
-        nameElement.textContent = userData.nama || 'Belum diisi';
-        nameElement.style.color = userData.profileComplete ? 'white' : '#ef4444';
-    }
-    
-    if (avatarElement && userData) {
-        avatarElement.src = userData.foto_profil || DEFAULT_AVATARS[0];
-    }
-    
-    if (badgeAvatar && userData) {
-        badgeAvatar.src = userData.foto_profil || DEFAULT_AVATARS[0];
-    }
-    
-    // Update form fields
-    updateProfileForm();
+    await firebaseDb.collection('users').doc(userId).set(payload);
+    console.log('✅ Data user baru berhasil dibuat');
 }
 
 // =======================
-// AUTHENTICATION
+// Authentication
 // =======================
 async function authLogin() {
     try {
-        log('Starting Google login...', 'info');
+        console.log('🔐 Memulai login Google...');
         showAuthLoading('Membuka Google Login…');
         
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('profile');
         provider.addScope('email');
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
         
         const result = await firebaseAuth.signInWithPopup(provider);
         
-        log(`Login successful: ${result.user.email}`, 'success');
+        console.log('✅ Login sukses:', result.user.email);
         showAuthLoading('Login berhasil, menyiapkan sistem…');
         
-        return result;
     } catch (error) {
-        log(`Login error: ${error.message}`, 'error');
-        
-        // Handle specific errors
-        if (error.code === 'auth/popup-closed-by-user') {
-            showWarning('Login dibatalkan oleh pengguna');
-        } else if (error.code === 'auth/popup-blocked') {
-            showError('Popup diblokir. Izinkan popup untuk melanjutkan login.');
-        } else {
-            showError(error.message || 'Login Google gagal');
-        }
-        
+        console.error('❌ Error login:', error);
         hideAuthLoading();
-        throw error;
+        throw new Error(error.message || 'Login Google gagal');
     }
 }
 
 async function authLogout() {
     try {
-        const confirmLogout = confirm('Apakah Anda yakin ingin logout?');
-        if (!confirmLogout) return;
-        
         showAuthLoading('Logout…');
         
-        // Cleanup before logout
-        if (userListener) {
-            userListener();
-            userListener = null;
+        // Cleanup
+        if (profileListener) {
+            profileListener();
+            profileListener = null;
         }
         
         await firebaseAuth.signOut();
+        console.log('✅ Logout berhasil');
         
-        log('Logout successful', 'success');
+        // Remove profile UI
+        const profileContainer = document.querySelector('.profile-button-container');
+        if (profileContainer) profileContainer.remove();
+        
+        const profilePanel = document.getElementById('profileOverlay');
+        if (profilePanel) profilePanel.remove();
+        
         window.location.href = `${getBasePath()}/login.html`;
-        
     } catch (error) {
-        log(`Logout error: ${error.message}`, 'error');
+        console.error('❌ Error logout:', error);
         showError('Gagal logout.');
-        hideAuthLoading();
     }
 }
 
 // =======================
-// ACCESS CONTROL
+// Access Control
 // =======================
 async function checkPageAccess() {
-    // Wait for auth to be ready
-    if (!authReady) {
-        setTimeout(checkPageAccess, 100);
+    const currentPath = window.location.pathname.replace('.html', '');
+    console.log(`🔒 Mengecek akses: ${currentPath} | Role: ${userRole}`);
+    
+    if (!currentUser) {
+        if (!isLoginPage()) redirectToLogin();
         return;
     }
     
-    const currentPath = window.location.pathname;
-    const normalizedPath = normalizePath(currentPath);
-    
-    log(`Checking access: ${normalizedPath} | Role: ${userRole} | Auth: ${!!currentUser}`, 'info');
-    
-    // Case 1: Not authenticated but not on login page
-    if (!currentUser && !isLoginPage()) {
-        log('Access denied: Not authenticated', 'warning');
-        redirectToLogin();
+    if (isLoginPage()) {
+        redirectBasedOnRole();
         return;
     }
     
-    // Case 2: Authenticated but on login page
-    if (currentUser && isLoginPage()) {
-        log('Already authenticated, redirecting...', 'info');
-        setTimeout(() => redirectBasedOnRole(), 800);
+    const rolePermissions = {
+        admin: ['/', '/login', '/admin', '/admin/creates', '/admin/panel', '/ujian'],
+        siswa: ['/', '/login', '/siswa', '/ujian']
+    };
+    
+    const allowed = rolePermissions[userRole] || [];
+    if (!allowed.includes(currentPath)) {
+        console.warn('⛔ Akses ditolak');
+        showAccessDenied();
         return;
     }
     
-    // Case 3: Authenticated, check role permissions
-    if (currentUser) {
-        const roleConfig = ROLE_PERMISSIONS[userRole];
-        
-        if (!roleConfig || !roleConfig.routes.includes(normalizedPath)) {
-            log(`Access denied for role ${userRole} to ${normalizedPath}`, 'warning');
-            showAccessDenied();
-            return;
-        }
-        
-        // Additional check for siswa profile completeness
-        if (userRole === 'siswa' && SYSTEM_CONFIG.profileRequired && 
-            !userData?.profileComplete && normalizedPath !== '/siswa') {
-            log('Profile incomplete, redirecting to profile', 'warning');
-            showWarning('Lengkapi profil terlebih dahulu!');
-            setTimeout(() => {
-                window.location.href = `${getBasePath()}/siswa/`;
-            }, 1500);
-            return;
-        }
-        
-        log('Access granted', 'success');
-    }
+    console.log('✅ Akses diizinkan');
 }
 
+// =======================
+// System Initialization
+// =======================
+async function initializeSystem() {
+    console.log('⚙️ Menginisialisasi sistem AlbEdu 1.1...');
+    showAuthLoading('Mengecek status autentikasi…');
+    
+    // Inject profile CSS
+    injectProfileCSS();
+    
+    firebaseAuth.onAuthStateChanged(async (user) => {
+        try {
+            if (user) {
+                console.log('👤 User terautentikasi:', user.email);
+                currentUser = user;
+                
+                showAuthLoading('Mengambil data pengguna…');
+                await fetchUserData(user.uid);
+                
+                showAuthLoading('Memverifikasi akses halaman…');
+                await checkPageAccess();
+                
+                // Create profile button
+                if (!isLoginPage()) {
+                    createProfileButton();
+                }
+                
+                authReady = true;
+                hideAuthLoading();
+                
+            } else {
+                console.log('👤 User belum login');
+                currentUser = null;
+                userRole = null;
+                userData = null;
+                authReady = true;
+                hideAuthLoading();
+                
+                if (!isLoginPage()) redirectToLogin();
+            }
+        } catch (err) {
+            console.error('❌ Auth flow error:', err);
+            hideAuthLoading();
+            showError('Terjadi kesalahan sistem autentikasi');
+        }
+    });
+}
+
+// =======================
+// Redirects & Navigation
+// =======================
 function redirectBasedOnRole() {
     if (!userRole) return;
     
@@ -1273,72 +834,61 @@ function redirectBasedOnRole() {
     if (userRole === 'admin') target = `${base}/admin/`;
     if (userRole === 'siswa') target = `${base}/siswa/`;
     
-    // Don't redirect if already on target page
-    const currentPath = window.location.pathname;
-    if (currentPath === target || currentPath === target + 'index.html') {
-        return;
-    }
-    
-    log(`Redirecting to: ${target}`, 'info');
-    window.location.href = target;
+    console.log('🔄 Redirect ke:', target);
+    setTimeout(() => (window.location.href = target), 800);
 }
 
 function redirectToLogin() {
-    const base = getBasePath();
-    const target = `${base}/login.html`;
-    
-    // Don't redirect if already on login page
-    if (isLoginPage()) return;
-    
-    log(`Redirecting to login: ${target}`, 'info');
-    window.location.href = target;
+    window.location.href = `${getBasePath()}/login.html`;
 }
 
 function showAccessDenied() {
     const base = getBasePath();
-    
-    if (userRole === 'admin') {
-        window.location.href = `${base}/admin/`;
-    } else if (userRole === 'siswa') {
-        window.location.href = `${base}/siswa/`;
-    } else {
-        window.location.href = `${base}/login.html`;
-    }
+    if (userRole === 'admin') window.location.href = `${base}/admin/`;
+    else if (userRole === 'siswa') window.location.href = `${base}/siswa/`;
+    else window.location.href = `${base}/login.html`;
 }
 
 // =======================
-// SYSTEM BOOTSTRAP
+// Error Handling
+// =======================
+function showError(message) {
+    let el = document.getElementById('systemError');
+    
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'systemError';
+        el.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #dc2626;
+            z-index: 10000;
+            max-width: 420px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-family: system-ui, -apple-system, sans-serif;
+        `;
+        document.body.appendChild(el);
+    }
+    
+    el.textContent = `Error: ${message}`;
+    el.style.display = 'block';
+    
+    setTimeout(() => (el.style.display = 'none'), 5000);
+}
+
+// =======================
+// Bootstrap System
 // =======================
 document.addEventListener('DOMContentLoaded', () => {
-    // Add global system styles
-    const systemStyles = document.createElement('style');
-    systemStyles.textContent = `
-        /* System Animations */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Prevent text selection on buttons */
-        .profile-btn, .btn, .avatar-edit-btn {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        
-        /* Smooth transitions */
-        .profile-panel-container,
-        .profile-panel,
-        .profile-btn {
-            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-    `;
-    document.head.appendChild(systemStyles);
-    
-    // Initialize system after short delay
     setTimeout(() => {
         if (typeof firebaseAuth === 'undefined') {
-            log('Firebase not loaded', 'error');
-            showError('Sistem Firebase belum siap. Refresh halaman.');
+            console.error('❌ Firebase belum siap');
+            showError('Firebase tidak tersedia');
             return;
         }
         
@@ -1347,27 +897,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =======================
-// GLOBAL EXPORTS
+// Global Exports
 // =======================
 window.authLogin = authLogin;
 window.authLogout = authLogout;
 window.checkPageAccess = checkPageAccess;
-window.toggleProfilePanel = toggleProfilePanel;
-window.openProfilePanel = openProfilePanel;
-window.closeProfilePanel = closeProfilePanel;
-window.updateProfile = updateProfile;
-window.openAvatarEditor = openAvatarEditor;
-window.selectAvatar = selectAvatar;
-window.handlePhotoUpload = handlePhotoUpload;
+window.showProfilePanel = showProfilePanel;
 
-// Export for debugging
-window.ALBYTE_SYSTEM = {
-    version: SYSTEM_CONFIG.version,
-    user: () => currentUser,
-    userData: () => userData,
-    role: () => userRole,
-    isProfileComplete: () => userData?.profileComplete || false,
-    reloadUserData: () => currentUser ? fetchUserData(currentUser.uid) : null
-};
-
-log(`AlByte Guard v${SYSTEM_CONFIG.version} SISTEM AKTIF`, 'system');
+console.log('🛡️ AlByte Guard 1.1 AKTIF. AlbEdu terlindungi dengan sistem profil canggih.');
