@@ -1,5 +1,3 @@
-// Safety Instructions and other headers are not part of the code, skipping to the actual JS.
-
 // ByteWard v0.1.4 - AlbEdu Security & Profile System
 // Advanced Security with Real-time Profile Management
 
@@ -83,11 +81,11 @@ let profileState = {
 // Core Utilities  
 // =======================  
 function getBasePath() {  
-    // FIX: Safer base path detection for root and subfolders
+    // FIX: Safer base path detection for root and subfolders (e.g., '/AlbEdu' on GitHub Pages)
     const path = window.location.pathname;
     const parts = path.split('/').filter(p => p);
     
-    // Jika ada base path (misal: /subfolder), return dengan leading slash
+    // Jika ada base path (misal: /AlbEdu), return dengan leading slash
     if (parts.length > 0 && !path.includes('/login')) {
         // Ambil base folder pertama sebagai base path
         return `/${parts[0]}`;
@@ -908,7 +906,7 @@ async function checkPageAccess() {
     const allowedPaths = ROLE_WHITELIST[userRole] || [];
     let normalizedPath = currentPath;
     const base = getBasePath();
-    if (base && normalizedPath.startsWith(base)) {
+    if (base && normalizedPath.startsWith(base.toLowerCase())) {
         normalizedPath = normalizedPath.substring(base.length);
     }
     
