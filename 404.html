@@ -3,29 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Halaman Tidak Ditemukan - AlbEdu</title>
-    <meta name="description" content="Halaman tidak ditemukan">
-    <meta name="theme-color" content="#2563eb">
-    
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <title>404 - Halaman Tidak Ditemukan | AlbEdu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .error-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .error-code {
+            font-size: 120px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.2);
+            color: #fff;
+        }
+        
+        .error-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .error-details {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 25px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 14px;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .error-details code {
+            color: #fbbf24;
+            word-break: break-all;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: 2px solid #3b82f6;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .search-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        
+        .app-info {
+            margin-top: 30px;
+            font-size: 14px;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .error-code {
+                font-size: 80px;
+            }
+            
+            .error-title {
+                font-size: 24px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="development-container">
-        <div class="development-card">
-            <div class="development-icon">🔍</div>
-            
-            <div class="development-message">
-                <h2>Halaman Tidak Ditemukan</h2>
-                <p>Halaman yang Anda cari tidak tersedia.</p>
-                <p>Kode error: 404</p>
-            </div>
-            
-            <div style="margin-top: 30px;">
-                <a href="login.html" class="back-button">Kembali ke Login</a>
-            </div>
+    <div class="error-container">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Halaman Tidak Ditemukan</h1>
+        
+        <p class="error-message">
+            Maaf, halaman yang Anda cari tidak ditemukan atau mungkin telah dipindahkan.
+            Sistem AlbEdu terdeteksi menggunakan base path <strong>/AlbEdu</strong>.
+        </p>
+        
+        <div class="error-details">
+            <div><strong>Path yang diminta:</strong> <code id="requestedPath"></code></div>
+            <div><strong>Base Path Aplikasi:</strong> <code>/AlbEdu</code></div>
+            <div><strong>Base URL:</strong> <code id="baseUrl"></code></div>
+        </div>
+        
+        <div class="search-box">
+            <p style="margin-bottom: 15px; font-size: 16px;">Cari halaman yang tersedia:</p>
+            <input type="text" id="pageSearch" placeholder="Ketik nama halaman (misal: login, siswa, admin)">
+            <div id="searchResults" style="text-align: left;"></div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/AlbEdu/login.html" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Ke Halaman Login
+            </a>
+            <a href="/AlbEdu/siswa/index.html" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Ke Dashboard Siswa
+            </a>
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
+        
+        <div class="app-info">
+            <p><i class="fas fa-info-circle"></i> AlbEdu Learning Platform v1.0</p>
+            <p><i class="fas fa-shield-alt"></i> Dilindungi oleh ByteWard Security v0.1.5</p>
         </div>
     </div>
+    
+    <script>
+        // Dynamic 404 page logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const requestedPath = document.getElementById('requestedPath');
+            const baseUrl = document.getElementById('baseUrl');
+            const pageSearch = document.getElementById('pageSearch');
+            const searchResults = document.getElementById('searchResults');
+            
+            // Show current path
+            requestedPath.textContent = window.location.pathname;
+            baseUrl.textContent = window.location.origin + '/AlbEdu';
+            
+            // Available pages for search
+            const availablePages = [
+                { name: 'Login', path: '/AlbEdu/login.html', icon: 'sign-in-alt' },
+                { name: 'Dashboard Siswa', path: '/AlbEdu/siswa/index.html', icon: 'user-graduate' },
+                { name: 'Dashboard Admin', path: '/AlbEdu/admin/index.html', icon: 'user-tie' },
+                { name: 'Ujian Online', path: '/AlbEdu/ujian/index.html', icon: 'file-alt' },
+                { name: 'Profil', path: '/AlbEdu/siswa/profile.html', icon: 'id-card' },
+                { name: 'Nilai', path: '/AlbEdu/siswa/grades.html', icon: 'chart-bar' }
+            ];
+            
+            // Search functionality
+            pageSearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                searchResults.innerHTML = '';
+                
+                if (searchTerm.length < 2) return;
+                
+                const filtered = availablePages.filter(page => 
+                    page.name.toLowerCase().includes(searchTerm) || 
+                    page.path.toLowerCase().includes(searchTerm)
+                );
+                
+                if (filtered.length > 0) {
+                    filtered.forEach(page => {
+                        const resultItem = document.createElement('div');
+                        resultItem.style.cssText = `
+                            padding: 10px;
+                            margin: 5px 0;
+                            background: rgba(255, 255, 255, 0.1);
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: background 0.3s;
+                        `;
+                        resultItem.innerHTML = `
+                            <i class="fas fa-${page.icon}"></i>
+                            <strong style="margin-left: 10px;">${page.name}</strong>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${page.path}</div>
+                        `;
+                        resultItem.addEventListener('click', () => {
+                            window.location.href = page.path;
+                        });
+                        resultItem.addEventListener('mouseenter', () => {
+                            resultItem.style.background = 'rgba(255, 255, 255, 0.2)';
+                        });
+                        resultItem.addEventListener('mouseleave', () => {
+                            resultItem.style.background = 'rgba(255, 255, 255, 0.1)';
+                        });
+                        searchResults.appendChild(resultItem);
+                    });
+                } else {
+                    searchResults.innerHTML = `
+                        <div style="padding: 10px; text-align: center; opacity: 0.7;">
+                            Tidak ditemukan halaman yang sesuai
+                        </div>
+                    `;
+                }
+            });
+            
+            // Auto-redirect jika path mengandung /AlbEdu
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/AlbEdu') && !currentPath.endsWith('404.html')) {
+                console.log('Mencoba redirect otomatis ke login...');
+                setTimeout(() => {
+                    window.location.href = '/AlbEdu/login.html';
+                }, 3000);
+            }
+            
+            // Log untuk debugging
+            console.log('404 Page Handler Loaded');
+            console.log('Current Path:', currentPath);
+            console.log('App Base: /AlbEdu');
+        });
+    </script>
 </body>
 </html>
