@@ -62,7 +62,7 @@ const DEFAULT_AVATARS = [
 ];      
     
 // =======================      
-// Profile Completeness Check (MISSING FROM YOUR CODE)    
+// Profile Completeness Check      
 // =======================      
 function checkProfileCompleteness(data) {      
     if (!data) return false;      
@@ -81,7 +81,7 @@ function generateGitHubAvatar(email) {
 }      
     
 // =======================      
-// User Data Management (MISSING FROM YOUR CODE)    
+// User Data Management      
 // =======================      
 async function fetchUserData(userId) {      
     console.log('📡 Mengambil data user dari Firestore...');      
@@ -310,21 +310,29 @@ async function initializeSystem() {
                 }    
             }      
         } catch (err) {      
-    console.error('❌ Auth flow error DETAIL:', {      
-        message: err.message,      
-        code: err.code,      
-        stack: err.stack      
-    });      
-    hideAuthLoading();      
+            console.error('❌ Auth flow error DETAIL:', {      
+                message: err.message,      
+                code: err.code,      
+                stack: err.stack      
+            });      
+            
+            if (window.UI) window.UI.hideAuthLoading();      
+            
+            // Tampilkan error yang lebih spesifik
+            let errorMsg = 'Terjadi kesalahan sistem autentikasi';
+            if (err.message) errorMsg += ': ' + err.message;
+            if (err.code) errorMsg += ' (Code: ' + err.code + ')';
+            
+            if (window.UI) window.UI.showError(errorMsg);      
+        } finally {
+            // Kode yang selalu dijalankan
+            if (window.UI) window.UI.hideAuthLoading();
+        }
+    });  // Akhir dari onAuthStateChanged
     
-    // Tampilkan error yang lebih spesifik
-    let errorMsg = 'Terjadi kesalahan sistem autentikasi';
-    if (err.message) errorMsg += ': ' + err.message;
-    if (err.code) errorMsg += ' (Code: ' + err.code + ')';
-    
-    showError(errorMsg);      
-} finally {
-    
+    console.log('✅ Auth observer berjalan');
+}  // Akhir dari function initializeSystem()
+
 // =======================      
 // Debug & Testing (Enhanced)    
 // =======================      
@@ -343,7 +351,7 @@ function debugByteWard() {
     console.log('Auth Ready:', authReady);    
     console.log('Redirect in Progress:', redirectInProgress);    
     console.log('==========================');    
-};    
+}    
     
 // =======================      
 // Bootstrap System      
