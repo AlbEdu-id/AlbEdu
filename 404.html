@@ -1,301 +1,311 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Halaman Tidak Ditemukan | AlbEdu</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            color: white;
-        }
-        
-        .error-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .error-code {
-            font-size: 120px;
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.2);
-            color: #fff;
-        }
-        
-        .error-title {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        
-        .error-message {
-            font-size: 18px;
-            margin-bottom: 30px;
-            line-height: 1.6;
-            opacity: 0.9;
-        }
-        
-        .error-details {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 25px 0;
-            text-align: left;
-            font-family: monospace;
-            font-size: 14px;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .error-details code {
-            color: #fbbf24;
-            word-break: break-all;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            padding: 14px 28px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-            border: 2px solid #3b82f6;
-        }
-        
-        .btn-primary:hover {
-            background: #2563eb;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-3px);
-        }
-        
-        .search-box {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-        }
-        
-        .search-box input {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: none;
-            background: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        
-        .search-box input:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-        }
-        
-        .app-info {
-            margin-top: 30px;
-            font-size: 14px;
-            opacity: 0.8;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding-top: 20px;
-        }
-        
-        @media (max-width: 600px) {
-            .error-code {
-                font-size: 80px;
-            }
-            
-            .error-title {
-                font-size: 24px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 - Halaman Hilang | AlbEdu</title>
+  
+  <!-- ByteWard Modules (Untuk 404 Handling) -->
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  
+  <!-- ByteWard Modules -->
+  <script src="assets/js/firebase.config.js"></script>
+  <script src="assets/js/byteward.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/auth.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f8ff;
+      color: #1f2937;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 40px;
+      max-width: 420px;
+      width: 100%;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+    }
+
+    .code {
+      font-size: 96px;
+      font-weight: 800;
+      color: #3b82f6;
+      line-height: 1;
+    }
+
+    h1 {
+      margin: 10px 0;
+      font-size: 26px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #6b7280;
+      margin-bottom: 25px;
+    }
+
+    .path {
+      font-family: monospace;
+      font-size: 13px;
+      background: #f1f5f9;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      word-break: break-all;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+
+    a {
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: 0.2s ease;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #2563eb;
+    }
+
+    .secondary {
+      border: 2px solid #e5e7eb;
+      color: #374151;
+      background: transparent;
+    }
+
+    .secondary:hover {
+      background: #f3f4f6;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
     
-    <!-- 🔥 PERBAIKAN: Tambahkan ByteWard modules -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/byteward.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/ui.js"></script>
+    /* ByteWard Debug Info */
+    .byteward-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: left;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .byteward-info h4 {
+      margin: 0 0 10px 0;
+      color: #1e40af;
+    }
+    
+    .byteward-info p {
+      margin: 5px 0;
+      font-size: 12px;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    
+    .status-ready { background: #10b981; }
+    .status-loading { background: #f59e0b; }
+    .status-error { background: #ef4444; }
+  </style>
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-code">404</div>
-        <h1 class="error-title">Halaman Tidak Ditemukan</h1>
-        
-        <p class="error-message">
-            Maaf, halaman yang Anda cari tidak ditemukan atau mungkin telah dipindahkan.
-            Sistem AlbEdu terdeteksi menggunakan base path <strong>/AlbEdu</strong>.
-        </p>
-        
-        <div class="error-details">
-            <div><strong>Path yang diminta:</strong> <code id="requestedPath"></code></div>
-            <div><strong>Base Path Aplikasi:</strong> <code>/AlbEdu</code></div>
-            <div><strong>Base URL:</strong> <code id="baseUrl"></code></div>
-        </div>
-        
-        <div class="search-box">
-            <p style="margin-bottom: 15px; font-size: 16px;">Cari halaman yang tersedia:</p>
-            <input type="text" id="pageSearch" placeholder="Ketik nama halaman (misal: login, siswa, admin)">
-            <div id="searchResults" style="text-align: left;"></div>
-        </div>
-        
-        <div class="action-buttons">
-            <a href="/AlbEdu/login.html" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i> Ke Halaman Login
-            </a>
-            <a href="/AlbEdu/ujian/index.html" class="btn btn-secondary">
-                <i class="fas fa-file-alt"></i> Ke Halaman Ujian
-            </a>
-            <a href="javascript:history.back()" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Kembali
-            </a>
-        </div>
-        
-        <div class="app-info">
-            <p><i class="fas fa-info-circle"></i> AlbEdu Learning Platform v1.0</p>
-            <p><i class="fas fa-shield-alt"></i> Dilindungi oleh ByteWard Security v0.1.5</p>
-        </div>
-    </div>
+
+  <div class="card">
+    <div class="code">404</div>
+    <h1>Halaman Hilang</h1>
+    <p>Halaman yang kamu cari tidak tersedia atau sudah dipindahkan.</p>
+
+    <div class="path" id="path"></div>
     
-    <script>
-        // Dynamic 404 page logic
-        document.addEventListener('DOMContentLoaded', function() {
-            const requestedPath = document.getElementById('requestedPath');
-            const baseUrl = document.getElementById('baseUrl');
-            const pageSearch = document.getElementById('pageSearch');
-            const searchResults = document.getElementById('searchResults');
-            
-            // Show current path
-            requestedPath.textContent = window.location.pathname;
-            baseUrl.textContent = window.location.origin + '/AlbEdu';
-            
-            // Available pages for search (diperbarui)
-            const availablePages = [
-                { name: 'Login', path: '/AlbEdu/login.html', icon: 'sign-in-alt' },
-                { name: 'Panel Admin', path: '/AlbEdu/admin/index.html', icon: 'user-tie' },
-                { name: 'Ujian Online', path: '/AlbEdu/ujian/index.html', icon: 'file-alt' },
-                { name: 'AlbEdu-Creates', path: '/AlbEdu/admin/creates.html', icon: 'tools' }
-            ];
-            
-            // Search functionality
-            pageSearch.addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                searchResults.innerHTML = '';
-                
-                if (searchTerm.length < 2) return;
-                
-                const filtered = availablePages.filter(page => 
-                    page.name.toLowerCase().includes(searchTerm) || 
-                    page.path.toLowerCase().includes(searchTerm)
-                );
-                
-                if (filtered.length > 0) {
-                    filtered.forEach(page => {
-                        const resultItem = document.createElement('div');
-                        resultItem.style.cssText = `
-                            padding: 10px;
-                            margin: 5px 0;
-                            background: rgba(255, 255, 255, 0.1);
-                            border-radius: 8px;
-                            cursor: pointer;
-                            transition: background 0.3s;
-                        `;
-                        resultItem.innerHTML = `
-                            <i class="fas fa-${page.icon}"></i>
-                            <strong style="margin-left: 10px;">${page.name}</strong>
-                            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${page.path}</div>
-                        `;
-                        resultItem.addEventListener('click', () => {
-                            window.location.href = page.path;
-                        });
-                        resultItem.addEventListener('mouseenter', () => {
-                            resultItem.style.background = 'rgba(255, 255, 255, 0.2)';
-                        });
-                        resultItem.addEventListener('mouseleave', () => {
-                            resultItem.style.background = 'rgba(255, 255, 255, 0.1)';
-                        });
-                        searchResults.appendChild(resultItem);
-                    });
-                } else {
-                    searchResults.innerHTML = `
-                        <div style="padding: 10px; text-align: center; opacity: 0.7;">
-                            Tidak ditemukan halaman yang sesuai
-                        </div>
-                    `;
-                }
-            });
-            
-            // Auto-redirect jika path mengandung /AlbEdu
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/AlbEdu') && !currentPath.endsWith('404.html')) {
-                console.log('Mencoba redirect otomatis ke login...');
-                setTimeout(() => {
-                    window.location.href = '/AlbEdu/login.html';
-                }, 3000);
-            }
-            
-            // Log untuk debugging
-            console.log('404 Page Handler Loaded');
-            console.log('Current Path:', currentPath);
-            console.log('App Base: /AlbEdu');
+    <!-- ByteWard Debug Info -->
+    <div class="byteward-info" id="bytewardInfo" style="display: none;">
+      <h4>ByteWard 404 Handler</h4>
+      <p><span id="basePathStatus" class="status-indicator status-loading"></span> <strong>Base Path:</strong> <span id="basePathText">Mengecek...</span></p>
+      <p><span id="authStatus" class="status-indicator status-loading"></span> <strong>Authentication:</strong> <span id="authText">Mengecek...</span></p>
+      <p><span id="redirectStatus" class="status-indicator status-loading"></span> <strong>Redirect:</strong> <span id="redirectText">Menunggu...</span></p>
+    </div>
+
+    <div class="actions">
+      <a href="/AlbEdu/login.html" class="primary">Ke Login</a>
+      <a class="secondary" onclick="goBack()">Kembali</a>
+      <a onclick="checkByteWard()" class="secondary" style="margin-top: 10px;">Cek ByteWard</a>
+      <a onclick="forceRedirect()" class="secondary">Auto Redirect</a>
+    </div>
+
+    <div class="footer">
+      AlbEdu • Error Handler • ByteWard v0.1.5
+    </div>
+  </div>
+
+  <script>
+    // Tampilkan path yang diminta
+    document.getElementById("path").textContent =
+      "Requested path: " + window.location.pathname;
+
+    // tombol kembali dengan fallback
+    function goBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "/AlbEdu/login.html";
+      }
+    }
+    
+    // Cek ByteWard Status
+    function checkByteWard() {
+      const infoDiv = document.getElementById("bytewardInfo");
+      infoDiv.style.display = "block";
+      
+      // Update status ByteWard
+      const basePathStatus = document.getElementById("basePathStatus");
+      const basePathText = document.getElementById("basePathText");
+      const authStatus = document.getElementById("authStatus");
+      const authText = document.getElementById("authText");
+      const redirectStatus = document.getElementById("redirectStatus");
+      const redirectText = document.getElementById("redirectText");
+      
+      // Check ByteWard
+      if (typeof ByteWard !== 'undefined') {
+        basePathStatus.className = "status-indicator status-ready";
+        basePathText.textContent = ByteWard.getBasePath ? ByteWard.getBasePath() : "Unknown";
+        
+        // Check Auth
+        if (typeof Auth !== 'undefined') {
+          authStatus.className = "status-indicator status-ready";
+          if (Auth.currentUser) {
+            authText.textContent = `Login sebagai: ${Auth.currentUser.email}`;
+          } else {
+            authText.textContent = "Belum login";
+          }
+        } else {
+          authStatus.className = "status-indicator status-error";
+          authText.textContent = "Auth module tidak ditemukan";
+        }
+        
+        // Check Redirect capability
+        redirectStatus.className = "status-indicator status-ready";
+        redirectText.textContent = "Klik Auto Redirect untuk redirect otomatis";
+        
+        console.log("✅ ByteWard ready:", {
+          basePath: ByteWard.getBasePath ? ByteWard.getBasePath() : "N/A",
+          currentPath: window.location.pathname,
+          Auth: typeof Auth,
+          UI: typeof UI
         });
-    </script>
+      } else {
+        basePathStatus.className = "status-indicator status-error";
+        basePathText.textContent = "ByteWard tidak dimuat";
+        authStatus.className = "status-indicator status-error";
+        authText.textContent = "Auth tidak tersedia";
+        redirectStatus.className = "status-indicator status-error";
+        redirectText.textContent = "Redirect tidak tersedia";
+        
+        console.error("❌ ByteWard tidak ditemukan");
+      }
+    }
+    
+    // Force redirect menggunakan ByteWard
+    function forceRedirect() {
+      if (typeof ByteWard !== 'undefined' && typeof ByteWard.handle404Page === 'function') {
+        console.log("🔄 Memanggil ByteWard.handle404Page()...");
+        ByteWard.handle404Page();
+        
+        // Update status
+        const redirectStatus = document.getElementById("redirectStatus");
+        const redirectText = document.getElementById("redirectText");
+        redirectStatus.className = "status-indicator status-ready";
+        redirectText.textContent = "Redirect diproses...";
+        
+        // Fallback setelah 3 detik
+        setTimeout(() => {
+          if (window.location.pathname.includes('404')) {
+            redirectText.textContent = "Redirect gagal, coba manual";
+            redirectStatus.className = "status-indicator status-error";
+          }
+        }, 3000);
+      } else {
+        alert("ByteWard tidak tersedia. Redirect manual diperlukan.");
+        window.location.href = "/AlbEdu/login.html";
+      }
+    }
+    
+    // Auto-check ByteWard saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("🔧 404 Page Loaded - Path:", window.location.pathname);
+      
+      // Coba panggil handle404Page otomatis setelah 1 detik
+      setTimeout(() => {
+        if (typeof ByteWard !== 'undefined' && typeof ByteWard.handle404Page === 'function') {
+          console.log("🔄 Auto-trigger ByteWard 404 handler...");
+          ByteWard.handle404Page();
+        } else {
+          console.log("⏳ Menunggu ByteWard...");
+          // Coba lagi setelah 2 detik
+          setTimeout(() => {
+            if (typeof ByteWard !== 'undefined' && typeof ByteWard.handle404Page === 'function') {
+              ByteWard.handle404Page();
+            }
+          }, 2000);
+        }
+      }, 1000);
+    });
+    
+    // Global error handler untuk 404 page
+    window.addEventListener('error', function(e) {
+      console.error("🔥 404 Page Error:", e.message);
+      
+      // Tampilkan error di UI jika ByteWard gagal
+      if (e.message.includes('ByteWard') || e.message.includes('Auth') || e.message.includes('firebase')) {
+        const infoDiv = document.getElementById("bytewardInfo");
+        if (infoDiv) {
+          infoDiv.style.display = "block";
+          infoDiv.innerHTML = `
+            <h4 style="color: #dc2626;">⚠️ System Error</h4>
+            <p>ByteWard gagal dimuat: ${e.message}</p>
+            <p>Silakan refresh halaman atau gunakan link manual di atas.</p>
+          `;
+          infoDiv.style.borderLeftColor = "#dc2626";
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
