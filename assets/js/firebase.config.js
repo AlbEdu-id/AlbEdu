@@ -42,7 +42,7 @@ try {
     const firebaseAuth = firebase.auth();
     const firebaseDb = firebase.firestore();
     
-    // 🔥 ENABLE OFFLINE PERSISTENCE (Tambahan dari Anda)
+    // 🔥 ENABLE OFFLINE PERSISTENCE
     firebaseDb.enablePersistence()
         .then(() => {
             console.log('✅ Firestore offline persistence diaktifkan');
@@ -124,13 +124,13 @@ try {
 }
 
 // ============================================
-// 🛡️ VALIDASI KONFIGURASI
+// 🛡️ VALIDASI KONFIGURASI (FIXED)
 // ============================================
 window.checkFirebaseConfig = function() {
     console.log('=== FIREBASE CONFIG VALIDATION ===');
     console.log('Firebase loaded:', typeof firebase !== 'undefined');
-    console.log('FirebaseAuth:', typeof firebaseAuth !== 'undefined');
-    console.log('FirebaseDb:', typeof firebaseDb !== 'undefined');
+    console.log('FirebaseAuth:', typeof window.firebaseAuth !== 'undefined');  // ← FIX: pakai window.
+    console.log('FirebaseDb:', typeof window.firebaseDb !== 'undefined');      // ← FIX: pakai window.
     console.log('Project ID:', firebaseConfig.projectId);
     console.log('===============================');
     
