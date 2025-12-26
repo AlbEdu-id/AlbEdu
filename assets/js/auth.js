@@ -310,14 +310,20 @@ async function initializeSystem() {
                 }    
             }      
         } catch (err) {      
-            console.error('❌ Auth flow error:', err);      
-            if (window.UI) window.UI.hideAuthLoading();      
-            if (window.UI) window.UI.showError('Terjadi kesalahan sistem autentikasi');      
-        } finally {    
-            redirectInProgress = false;    
-        }    
+    console.error('❌ Auth flow error DETAIL:', {      
+        message: err.message,      
+        code: err.code,      
+        stack: err.stack      
     });      
-}      
+    hideAuthLoading();      
+    
+    // Tampilkan error yang lebih spesifik
+    let errorMsg = 'Terjadi kesalahan sistem autentikasi';
+    if (err.message) errorMsg += ': ' + err.message;
+    if (err.code) errorMsg += ' (Code: ' + err.code + ')';
+    
+    showError(errorMsg);      
+} finally {
     
 // =======================      
 // Debug & Testing (Enhanced)    
