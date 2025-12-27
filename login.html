@@ -24,7 +24,7 @@
     <!-- 2. Firebase Config -->
     <script src="assets/js/firebase.config.js"></script>
     
-    <!-- 3. ByteWard Modules (URUTAN PENTING!) -->
+    <!-- 3. ByteWard Modules -->
     <script src="assets/js/byteward.js"></script>
     <script src="assets/js/ui.js"></script>
     <script src="assets/js/auth.js"></script>
@@ -61,35 +61,15 @@
                     <span id="loginBtnText">Login dengan Google</span>  
                 </button>  
             </div>  
-            
-            <!-- Debug Status -->  
-            <div id="debugStatus" class="debug-status" style="display:none;">  
-                <p id="debugText">Menyiapkan sistem autentikasi…</p>  
-            </div>  
               
             <!-- Loading Indicator (Hidden by default) -->  
-            <div id="loadingIndicator" class="loading-indicator">  
+            <div id="loadingIndicator" class="loading-indicator" style="display: none;">  
                 <div class="spinner"></div>  
                 <p>Memproses autentikasi...</p>  
             </div>  
               
             <!-- Error Message Container (Hidden by default) -->  
-            <div id="errorMessage" class="error-message"></div>  
-              
-            <!-- 🔥 TAMBAHKAN: System Status Indicator -->
-            <div id="systemStatus" class="system-status" style="
-                margin-top: 20px;
-                padding: 10px;
-                background: #f3f4f6;
-                border-radius: 8px;
-                font-size: 12px;
-                color: #6b7280;
-                display: none;
-            ">
-                <div id="firebaseStatus">Firebase: ❌ Belum dimuat</div>
-                <div id="bytewardStatus">ByteWard: ❌ Belum dimuat</div>
-                <div id="authStatus">Auth System: ❌ Belum dimuat</div>
-            </div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>  
         </div>  
           
         <!-- Footer -->  
@@ -105,10 +85,7 @@
             const loginBtn = document.getElementById('googleLoginBtn');  
             const loginBtnText = document.getElementById('loginBtnText');  
             const errorMessage = document.getElementById('errorMessage');  
-            const systemStatus = document.getElementById('systemStatus');  
-            const firebaseStatus = document.getElementById('firebaseStatus');  
-            const bytewardStatus = document.getElementById('bytewardStatus');  
-            const authStatus = document.getElementById('authStatus');  
+            const loadingIndicator = document.getElementById('loadingIndicator');  
               
             let loginInProgress = false;  
             let systemReady = false;  
@@ -121,22 +98,7 @@
                 const authReady = typeof Auth !== 'undefined' &&  
                                 typeof Auth.authLogin === 'function';  
                   
-                // Update status display  
-                firebaseStatus.textContent = `Firebase: ${firebaseReady ? '✅ Siap' : '❌ Belum dimuat'}`;  
-                bytewardStatus.textContent = `ByteWard: ${bytewardReady ? '✅ Siap' : '❌ Belum dimuat'}`;  
-                authStatus.textContent = `Auth System: ${authReady ? '✅ Siap' : '❌ Belum dimuat'}`;  
-                  
                 systemReady = firebaseReady && bytewardReady && authReady;  
-                  
-                if (systemReady) {  
-                    systemStatus.style.display = 'block';  
-                    systemStatus.style.background = '#d1fae5';  
-                    systemStatus.style.color = '#065f46';  
-                    console.log('✅ Sistem AlbEdu siap digunakan');  
-                } else {  
-                    systemStatus.style.display = 'block';  
-                    console.log('⏳ Menunggu sistem siap...');  
-                }  
                   
                 return systemReady;  
             }  
@@ -147,8 +109,25 @@
                 loginBtn.disabled = disabled;  
                 loginBtn.style.opacity = disabled ? '0.7' : '1';  
                 loginBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';  
-                console.log('[LOGIN]', text);  
             }  
+              
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+              
+            function showLoading(show) {
+                if (show) {
+                    loadingIndicator.style.display = 'block';
+                    loginBtn.style.display = 'none';
+                } else {
+                    loadingIndicator.style.display = 'none';
+                    loginBtn.style.display = 'flex';
+                }
+            }
               
             // Cek sistem setiap 500ms  
             const readyCheckInterval = setInterval(() => {  
@@ -158,12 +137,13 @@
                 }  
             }, 500);  
               
-            // Initial check  
+            // Timeout fallback jika sistem belum siap setelah 5 detik
             setTimeout(() => {  
-                if (!checkSystemReady()) {  
-                    console.warn('⚠️ Sistem belum siap setelah 2 detik');  
+                if (!systemReady) {  
+                    showError('Sistem sedang dalam pemeliharaan. Silakan coba lagi nanti.');
+                    setButtonState('Sistem Tidak Tersedia', true);
                 }  
-            }, 2000);  
+            }, 5000);  
               
             loginBtn.addEventListener('click', async function() {  
                 if (loginInProgress) return;  
@@ -176,18 +156,13 @@
                       
                     loginInProgress = true;  
                     errorMessage.style.display = 'none';  
+                    showLoading(true);
                       
-                    setButtonState('Menyiapkan autentikasi…', true);  
-                      
-                    await new Promise(r => setTimeout(r, 300));  
-                    setButtonState('Menunggu konfirmasi Google…', true);  
-                      
-                    // 🔥 FIX: Gunakan window.Auth.authLogin langsung  
+                    // Gunakan window.Auth.authLogin langsung  
                     if (!window.Auth || typeof window.Auth.authLogin !== 'function') {  
-                        throw new Error('Fungsi login tidak tersedia. Kode: AUTH_404');  
+                        throw new Error('Fungsi login tidak tersedia.');  
                     }  
                       
-                    console.log('🚀 Memulai proses login Google...');  
                     await window.Auth.authLogin();  
                       
                     // Jika sampai sini, login sukses tapi belum redirect  
@@ -196,47 +171,30 @@
                     // Fallback timeout jika tidak redirect  
                     setTimeout(() => {  
                         if (loginInProgress) {  
-                            console.warn('⚠️ Login sukses tapi tidak redirect');  
                             window.location.reload();  
                         }  
                     }, 3000);  
                       
                 } catch (error) {  
                     loginInProgress = false;  
+                    showLoading(false);
                     setButtonState('Login dengan Google', false);  
                       
-                    errorMessage.textContent = `Login gagal: ${error.message}`;  
-                    errorMessage.style.display = 'block';  
-                      
-                    console.error('❌ Login error:', error);  
-                    
-                    // Coba check system ready lagi  
-                    checkSystemReady();  
+                    showError(`Login gagal: ${error.message}`);  
                 }  
             });  
-              
-            // Fallback: kalau user udah login tapi belum redirect  
-            setTimeout(() => {  
-                if (loginInProgress) {  
-                    setButtonState('Memproses autentikasi…', true);  
-                }  
-            }, 1500);  
             
             // Set current year in footer  
             document.getElementById('currentYear').textContent = new Date().getFullYear();  
         });  
         
-        // 🔥 TAMBAHKAN: Global error handler  
+        // Global error handler  
         window.addEventListener('error', function(e) {  
-            console.error('🔥 GLOBAL ERROR:', e.message);  
-            console.error('File:', e.filename);  
-            console.error('Line:', e.lineno);  
-            
-            // Jika error terkait firebase atau Auth  
-            if (e.message.includes('firebase') || e.message.includes('Auth') || e.message.includes('ByteWard')) {  
+            // Hanya tampilkan error yang penting untuk user
+            if (e.message.includes('firebase') || e.message.includes('Auth')) {  
                 const errorDiv = document.getElementById('errorMessage');  
                 if (errorDiv) {  
-                    errorDiv.textContent = `System Error: ${e.message}. Silakan refresh halaman.`;  
+                    errorDiv.textContent = 'Terjadi kesalahan sistem. Silakan refresh halaman.';  
                     errorDiv.style.display = 'block';  
                 }  
             }  
