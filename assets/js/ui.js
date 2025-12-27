@@ -194,11 +194,7 @@ function populateAvatarOptions() {
 
     if (avatar.id === 'github') {
       const githubUrl = window.Auth?.currentUser ? generateGitHubAvatar(window.Auth.currentUser.email) : '';
-      option.innerHTML = `
-        <img src="${githubUrl}" 
-             alt="${avatar.name}"
-             onerror="this.parentElement.innerHTML='<div class="option-label">${avatar.name}</div>'">
-      `;
+      option.innerHTML = `<img src="${githubUrl}" alt="${avatar.name}" onerror="this.parentElement.innerHTML='<div class=\\"option-label\\">${avatar.name}</div>'">`;
     } else {
       option.innerHTML = `<img src="${avatar.url}" alt="${avatar.name}">`;
     }
@@ -713,3 +709,4 @@ window.UI = {
 };
 
 console.log('🎨 UI Module v0.1.5 - UI & UX siap.');
+
