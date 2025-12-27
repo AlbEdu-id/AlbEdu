@@ -1,11 +1,11 @@
-// ByteWard UI Module v0.1.9 - Enhanced UI & Notification System
-console.log('🎨 Memuat UI Module v0.1.9...');
+// ByteWard UI Module v0.2.0 - Enhanced UI & Notification System dengan DiceBear
+console.log('🎨 Memuat UI Module v0.2.0...');
 
 // =======================
 // Configuration
 // =======================
 const UI_CONFIG = {
-    version: '0.1.9',
+    version: '0.2.0',
     features: {
         profileSystem: true,
         notificationSystem: true,
@@ -81,7 +81,7 @@ class NotificationManager {
 
     updatePosition() {
         if (!this.container) return;
-        
+          
         var isMobile = window.innerWidth <= 767;
         if (isMobile) {
             this.container.style.cssText = 'position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 100000; pointer-events: none;';
@@ -102,10 +102,10 @@ class NotificationManager {
         var notification = document.createElement('div');
         notification.id = id;
         notification.className = 'notification notification-' + type + ' notification-enter';
-        
+          
         var iconContent = icon || this.getIconByType(type);
         var typeTitle = this.getTypeTitle(type);
-        
+          
         notification.innerHTML = '<div class="notification-content">' +
             '<div class="notification-icon">' + iconContent + '</div>' +
             '<div class="notification-text">' +
@@ -159,7 +159,7 @@ class NotificationManager {
 
     updateStack() {
         var notifications = Array.from(this.container.children);
-        
+          
         if (notifications.length > this.maxStack) {
             var toRemove = notifications.slice(this.maxStack);
             toRemove.forEach(function(notification) {
@@ -254,12 +254,23 @@ function createProfileButton() {
     var button = document.createElement('button');
     button.className = 'profile-button';
     button.id = 'profileTrigger';
-    
+      
+    // Gunakan avatar user atau default dengan DiceBear
     var avatarUrl = (window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || 
-                   ((window.Auth && window.Auth.currentUser) ? generateGitHubAvatar(window.Auth.currentUser.email) : '');
-    var fallbackUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=6b7280';
+                   ((window.Auth && window.Auth.currentUser) ? 
+                    generateDefaultAvatar(window.Auth.currentUser.email) : 
+                    generateDefaultAvatar('user'));
     
-    button.innerHTML = '<img src="' + avatarUrl + '" alt="Profile" class="profile-image" onerror="this.onerror=null; this.src=\'' + fallbackUrl + '\'">';
+    // Buat img element dengan event handler untuk error
+    var img = document.createElement('img');
+    img.src = avatarUrl;
+    img.alt = 'Profile';
+    img.className = 'profile-image';
+    img.onerror = function() {
+        this.src = generateDefaultAvatar('user');
+    };
+    
+    button.appendChild(img);
 
     if (window.Auth && window.Auth.profileState && !window.Auth.profileState.isProfileComplete) {
         var indicator = document.createElement('div');
@@ -281,6 +292,10 @@ function updateProfileButton() {
     var img = button.querySelector('.profile-image');
     if (img && window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) {
         img.src = window.Auth.userData.foto_profil;
+        // Tambahkan handler error untuk fallback
+        img.onerror = function() {
+            this.src = generateDefaultAvatar(window.Auth.currentUser?.email || 'user');
+        };
     }
 
     var indicator = button.querySelector('.profile-indicator');
@@ -296,84 +311,231 @@ function updateProfileButton() {
 }
 
 // =======================
-// Profile Panel System
+// Profile Panel System (Tanpa innerHTML panjang)
 // =======================
 function createProfilePanel() {
     var existing = document.getElementById('profilePanel');
     if (existing) existing.remove();
 
+    // Buat overlay
     var overlay = document.createElement('div');
     overlay.className = 'profile-overlay';
     overlay.id = 'profileOverlay';
 
+    // Buat panel
     var panel = document.createElement('div');
     panel.className = 'profile-panel';
     panel.id = 'profilePanel';
 
-    var headerTitle = (window.Auth && window.Auth.profileState && window.Auth.profileState.isProfileComplete) ? 'Profil Saya' : 'Lengkapi Profil';
-    var avatarUrl = (window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || 
-                   ((window.Auth && window.Auth.currentUser) ? generateGitHubAvatar(window.Auth.currentUser.email) : '');
-    var userName = (window.Auth && window.Auth.userData && window.Auth.userData.nama) || 
-                  ((window.Auth && window.Auth.currentUser && window.Auth.currentUser.displayName) ? 
-                   window.Auth.currentUser.displayName : 'Nama belum diisi');
-    var userNama = (window.Auth && window.Auth.userData && window.Auth.userData.nama) || '';
-    var fallbackUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=6b7280';
+    // Header
+    var header = document.createElement('div');
+    header.className = 'profile-header';
     
-    var panelHTML = '' +
-        '<div class="profile-header">' +
-            '<h2>' + headerTitle + '</h2>' +
-            '<button class="close-profile" id="closeProfile">' +
-                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-                    '<path d="M18 6L6 18M6 6l12 12"/>' +
-                '</svg>' +
-            '</button>' +
-        '</div>' +
-        '<div class="profile-content">' +
-            '<div class="current-profile">' +
-                '<img src="' + avatarUrl + '" alt="Current Avatar" class="current-avatar" onerror="this.onerror=null; this.src=\'' + fallbackUrl + '\'">' +
-                '<div class="current-name">' + userName + '</div>' +
-            '</div>' +
-            '<div class="edit-section">' +
-                '<div class="name-input-group">' +
-                    '<label for="profileName">Nama Lengkap</label>' +
-                    '<input type="text" id="profileName" class="name-input" placeholder="Masukkan nama lengkap" value="' + userNama + '">' +
-                '</div>' +
-                '<div class="avatar-options">' +
-                    '<div class="option-title">Pilih Avatar</div>' +
-                    '<div class="option-grid" id="avatarOptions"></div>' +
-                    '<div class="custom-upload">' +
-                        '<label class="upload-label">' +
-                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">' +
-                                '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
-                                '<polyline points="17 8 12 3 7 8"/>' +
-                                '<line x1="12" y1="3" x2="12" y2="15"/>' +
-                            '</svg>' +
-                            'Unggah Foto Sendiri' +
-                            '<input type="file" id="avatarUpload" class="upload-input" accept="image/*">' +
-                        '</label>' +
-                        '<div class="preview-container" id="previewContainer">' +
-                            '<div class="preview-title">Pratinjau:</div>' +
-                            '<img class="preview-image" id="previewImage">' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="status-message" id="statusMessage"></div>' +
-                '<div class="profile-actions">' +
-                    '<button class="save-btn" id="saveProfile" disabled>' +
-                        '<span id="saveText">Simpan Perubahan</span>' +
-                        '<span class="save-loading" id="saveLoading">' +
-                            '<span class="spinner"></span>' +
-                            'Menyimpan...' +
-                        '</span>' +
-                    '</button>' +
-                    '<button class="cancel-btn" id="cancelEdit">Batal</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
+    var headerTitle = document.createElement('h2');
+    headerTitle.textContent = (window.Auth && window.Auth.profileState && window.Auth.profileState.isProfileComplete) ? 
+                             'Profil Saya' : 'Lengkapi Profil';
+    
+    var closeButton = document.createElement('button');
+    closeButton.className = 'close-profile';
+    closeButton.id = 'closeProfile';
+    
+    var closeSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    closeSVG.setAttribute('width', '20');
+    closeSVG.setAttribute('height', '20');
+    closeSVG.setAttribute('viewBox', '0 0 24 24');
+    closeSVG.setAttribute('fill', 'none');
+    closeSVG.setAttribute('stroke', 'currentColor');
+    closeSVG.setAttribute('stroke-width', '2');
+    
+    var closePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    closePath.setAttribute('d', 'M18 6L6 18M6 6l12 12');
+    closeSVG.appendChild(closePath);
+    closeButton.appendChild(closeSVG);
+    
+    header.appendChild(headerTitle);
+    header.appendChild(closeButton);
 
-    panel.innerHTML = panelHTML;
+    // Content
+    var content = document.createElement('div');
+    content.className = 'profile-content';
+
+    // Current Profile Section
+    var currentProfile = document.createElement('div');
+    currentProfile.className = 'current-profile';
+    
+    var currentAvatar = document.createElement('img');
+    currentAvatar.className = 'current-avatar';
+    currentAvatar.alt = 'Current Avatar';
+    currentAvatar.src = (window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || 
+                       generateDefaultAvatar(window.Auth.currentUser?.email || 'user');
+    currentAvatar.onerror = function() {
+        this.src = generateDefaultAvatar(window.Auth.currentUser?.email || 'user');
+    };
+    
+    var currentName = document.createElement('div');
+    currentName.className = 'current-name';
+    currentName.textContent = (window.Auth && window.Auth.userData && window.Auth.userData.nama) || 
+                             (window.Auth && window.Auth.currentUser && window.Auth.currentUser.displayName) || 
+                             'Nama belum diisi';
+    
+    currentProfile.appendChild(currentAvatar);
+    currentProfile.appendChild(currentName);
+
+    // Edit Section
+    var editSection = document.createElement('div');
+    editSection.className = 'edit-section';
+
+    // Name Input Group
+    var nameInputGroup = document.createElement('div');
+    nameInputGroup.className = 'name-input-group';
+    
+    var nameLabel = document.createElement('label');
+    nameLabel.htmlFor = 'profileName';
+    nameLabel.textContent = 'Nama Lengkap';
+    
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = 'profileName';
+    nameInput.className = 'name-input';
+    nameInput.placeholder = 'Masukkan nama lengkap';
+    nameInput.value = (window.Auth && window.Auth.userData && window.Auth.userData.nama) || '';
+    
+    nameInputGroup.appendChild(nameLabel);
+    nameInputGroup.appendChild(nameInput);
+
+    // Avatar Options
+    var avatarOptionsContainer = document.createElement('div');
+    avatarOptionsContainer.className = 'avatar-options';
+    
+    var optionTitle = document.createElement('div');
+    optionTitle.className = 'option-title';
+    optionTitle.textContent = 'Pilih Avatar';
+    
+    var optionGrid = document.createElement('div');
+    optionGrid.className = 'option-grid';
+    optionGrid.id = 'avatarOptions';
+    
+    avatarOptionsContainer.appendChild(optionTitle);
+    avatarOptionsContainer.appendChild(optionGrid);
+
+    // Custom Upload
+    var customUpload = document.createElement('div');
+    customUpload.className = 'custom-upload';
+    
+    var uploadLabel = document.createElement('label');
+    uploadLabel.className = 'upload-label';
+    
+    var uploadSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    uploadSVG.setAttribute('width', '20');
+    uploadSVG.setAttribute('height', '20');
+    uploadSVG.setAttribute('viewBox', '0 0 24 24');
+    uploadSVG.setAttribute('fill', 'none');
+    uploadSVG.setAttribute('stroke', 'currentColor');
+    uploadSVG.setAttribute('stroke-width', '2');
+    uploadSVG.style.marginRight = '8px';
+    
+    var uploadPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    uploadPath1.setAttribute('d', 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4');
+    var uploadPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    uploadPolyline.setAttribute('points', '17 8 12 3 7 8');
+    var uploadLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    uploadLine.setAttribute('x1', '12');
+    uploadLine.setAttribute('y1', '3');
+    uploadLine.setAttribute('x2', '12');
+    uploadLine.setAttribute('y2', '15');
+    
+    uploadSVG.appendChild(uploadPath1);
+    uploadSVG.appendChild(uploadPolyline);
+    uploadSVG.appendChild(uploadLine);
+    
+    uploadLabel.appendChild(uploadSVG);
+    uploadLabel.appendChild(document.createTextNode('Unggah Foto Sendiri'));
+    
+    var uploadInput = document.createElement('input');
+    uploadInput.type = 'file';
+    uploadInput.id = 'avatarUpload';
+    uploadInput.className = 'upload-input';
+    uploadInput.accept = 'image/*';
+    uploadLabel.appendChild(uploadInput);
+    
+    var previewContainer = document.createElement('div');
+    previewContainer.className = 'preview-container';
+    previewContainer.id = 'previewContainer';
+    
+    var previewTitle = document.createElement('div');
+    previewTitle.className = 'preview-title';
+    previewTitle.textContent = 'Pratinjau:';
+    
+    var previewImage = document.createElement('img');
+    previewImage.className = 'preview-image';
+    previewImage.id = 'previewImage';
+    
+    previewContainer.appendChild(previewTitle);
+    previewContainer.appendChild(previewImage);
+    
+    customUpload.appendChild(uploadLabel);
+    customUpload.appendChild(previewContainer);
+
+    // Status Message
+    var statusMessage = document.createElement('div');
+    statusMessage.className = 'status-message';
+    statusMessage.id = 'statusMessage';
+    statusMessage.style.display = 'none';
+
+    // Profile Actions
+    var profileActions = document.createElement('div');
+    profileActions.className = 'profile-actions';
+    
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.id = 'saveProfile';
+    saveBtn.disabled = true;
+    
+    var saveText = document.createElement('span');
+    saveText.id = 'saveText';
+    saveText.textContent = 'Simpan Perubahan';
+    
+    var saveLoading = document.createElement('span');
+    saveLoading.className = 'save-loading';
+    saveLoading.id = 'saveLoading';
+    
+    var spinner = document.createElement('span');
+    spinner.className = 'spinner';
+    
+    saveLoading.appendChild(spinner);
+    saveLoading.appendChild(document.createTextNode('Menyimpan...'));
+    
+    saveBtn.appendChild(saveText);
+    saveBtn.appendChild(saveLoading);
+    
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'cancel-btn';
+    cancelBtn.id = 'cancelEdit';
+    cancelBtn.textContent = 'Batal';
+    
+    profileActions.appendChild(saveBtn);
+    profileActions.appendChild(cancelBtn);
+
+    // Assemble Edit Section
+    editSection.appendChild(nameInputGroup);
+    editSection.appendChild(avatarOptionsContainer);
+    editSection.appendChild(customUpload);
+    editSection.appendChild(statusMessage);
+    editSection.appendChild(profileActions);
+
+    // Assemble Content
+    content.appendChild(currentProfile);
+    content.appendChild(editSection);
+
+    // Assemble Panel
+    panel.appendChild(header);
+    panel.appendChild(content);
+
+    // Assemble Overlay
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
+    
+    // Initialize panel functionality
     initializeProfilePanel();
 }
 
@@ -414,28 +576,30 @@ function populateAvatarOptions() {
     if (!container) return;
 
     container.innerHTML = '';
-    var avatars = (window.Auth && window.Auth.DEFAULT_AVATARS) || [];
+    var avatars = (window.Auth && window.Auth.PROFILE_AVATARS) || [];
 
     avatars.forEach(function(avatar) {
         var option = document.createElement('div');
         option.className = 'avatar-option';
         option.dataset.id = avatar.id;
 
-        if (avatar.id === 'github') {
-            var githubUrl = (window.Auth && window.Auth.currentUser) ? generateGitHubAvatar(window.Auth.currentUser.email) : '';
-            option.innerHTML = '<img src="' + githubUrl + '" alt="' + avatar.name + '" onerror="this.parentElement.innerHTML=\'<div class="option-label">' + avatar.name + '</div>\'">';
-        } else {
-            option.innerHTML = '<img src="' + avatar.url + '" alt="' + avatar.name + '">';
-        }
+        var img = document.createElement('img');
+        img.src = avatar.url;
+        img.alt = avatar.name;
+        img.onerror = function() {
+            var label = document.createElement('div');
+            label.className = 'option-label';
+            label.textContent = avatar.name;
+            option.innerHTML = '';
+            option.appendChild(label);
+        };
 
+        option.appendChild(img);
+
+        // Cek apakah avatar ini yang sedang dipilih
         if (window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) {
             var currentUrl = window.Auth.userData.foto_profil;
-            if (avatar.id === 'github' && currentUrl.includes('github.com/identicons/')) {
-                option.classList.add('selected');
-                if (window.Auth && window.Auth.profileState) {
-                    window.Auth.profileState = Object.assign({}, window.Auth.profileState, { selectedAvatar: 'github' });
-                }
-            } else if (currentUrl === avatar.url) {
+            if (currentUrl === avatar.url) {
                 option.classList.add('selected');
                 if (window.Auth && window.Auth.profileState) {
                     window.Auth.profileState = Object.assign({}, window.Auth.profileState, { selectedAvatar: avatar.id });
@@ -526,11 +690,8 @@ function checkForChanges() {
         var state = window.Auth.profileState;
         if (state.selectedAvatar === 'custom' && state.customAvatar) {
             avatarChanged = state.customAvatar !== ((window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || '');
-        } else if (state.selectedAvatar === 'github') {
-            var githubUrl = (window.Auth && window.Auth.currentUser) ? generateGitHubAvatar(window.Auth.currentUser.email) : '';
-            avatarChanged = githubUrl !== ((window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || '');
         } else if (state.selectedAvatar) {
-            var avatars = (window.Auth && window.Auth.DEFAULT_AVATARS) || [];
+            var avatars = (window.Auth && window.Auth.PROFILE_AVATARS) || [];
             var selected = avatars.find(function(a) { return a.id === state.selectedAvatar; });
             avatarChanged = (selected && selected.url) !== ((window.Auth && window.Auth.userData && window.Auth.userData.foto_profil) || '');
         }
@@ -630,10 +791,8 @@ async function saveProfile() {
         var newAvatarUrl = window.Auth.userData.foto_profil;
         if (state.selectedAvatar === 'custom' && state.customAvatar) {
             newAvatarUrl = state.customAvatar;
-        } else if (state.selectedAvatar === 'github') {
-            newAvatarUrl = (window.Auth && window.Auth.currentUser) ? generateGitHubAvatar(window.Auth.currentUser.email) : '';
         } else if (state.selectedAvatar) {
-            var selected = (window.Auth.DEFAULT_AVATARS || []).find(function(a) { return a.id === state.selectedAvatar; });
+            var selected = (window.Auth.PROFILE_AVATARS || []).find(function(a) { return a.id === state.selectedAvatar; });
             newAvatarUrl = (selected && selected.url) || '';
         }
 
@@ -656,13 +815,20 @@ async function saveProfile() {
         });
 
         updateProfileButton();
+        
+        // NOTIFIKASI SUKSES - Sistem Feedback
         if (window.UI && window.UI.Notification && window.UI.Notification.success) {
-            window.UI.Notification.success('Profile Updated', 'Your profile has been successfully updated!');
+            window.UI.Notification.success('Sukses', 'Profil berhasil disimpan!');
         }
 
         var currentAvatar = document.querySelector('.current-avatar');
         var currentName = document.querySelector('.current-name');
-        if (currentAvatar && updates.foto_profil) currentAvatar.src = updates.foto_profil;
+        if (currentAvatar && updates.foto_profil) {
+            currentAvatar.src = updates.foto_profil;
+            currentAvatar.onerror = function() {
+                this.src = generateDefaultAvatar(window.Auth.currentUser?.email || 'user');
+            };
+        }
         if (currentName && updates.nama) currentName.textContent = updates.nama;
 
         if (willBeComplete && !state.autoCloseTriggered) {
@@ -672,9 +838,12 @@ async function saveProfile() {
 
     } catch (error) {
         console.error('Save profile error:', error);
+        
+        // NOTIFIKASI ERROR - Sistem Feedback
         if (window.UI && window.UI.Notification && window.UI.Notification.error) {
-            window.UI.Notification.error('Save Failed', 'Failed to save changes: ' + error.message);
+            window.UI.Notification.error('Gagal', 'Profil gagal disimpan: ' + error.message);
         }
+        
         if (window.Auth && window.Auth.profileState) {
             window.Auth.profileState = Object.assign({}, window.Auth.profileState, { isLoading: false });
         }
@@ -712,7 +881,7 @@ function injectProfileCSS() {
     var cssPath = window.ByteWard ? 
         window.ByteWard.buildFullPath(window.ByteWard.APP_CONFIG.ASSETS.profileCSS) : 
         '/assets/css/profile.css';
-    
+      
     console.log('🎨 Memuat profile CSS dari:', cssPath);
 
     var link = document.createElement('link');
@@ -736,7 +905,7 @@ function injectFallbackCSS() {
     link.rel = 'stylesheet';
     link.href = '/assets/css/profile-fallback.css';
     link.id = 'profile-fallback-css';
-    
+      
     link.onerror = function() { console.warn('Fallback CSS juga gagal dimuat'); };
     document.head.appendChild(link);
 }
@@ -746,13 +915,13 @@ function injectFallbackCSS() {
 // =======================
 function showAuthLoading(text) {
     text = text || 'Memverifikasi sesi login…';
-    
+      
     var el = document.getElementById('loadingIndicator');
     if (!el) {
         el = document.createElement('div');
         el.id = 'loadingIndicator';
         el.className = 'loading-indicator';
-        
+          
         el.innerHTML = '' +
             '<div class="block-loader">' +
                 '<div class="block-block" style="--i:0"></div>' +
@@ -765,7 +934,7 @@ function showAuthLoading(text) {
             '<div class="progress-bar">' +
                 '<div class="progress-fill"></div>' +
             '</div>';
-        
+          
         document.body.appendChild(el);
         injectLoadingCSS();
     }
@@ -779,14 +948,14 @@ function showAuthLoading(text) {
 function hideAuthLoading() {
     var el = document.getElementById('loadingIndicator');
     if (!el) return;
-    
+      
     el.style.opacity = '0';
     setTimeout(function() { el.style.display = 'none'; }, 300);
 }
 
 function injectLoadingCSS() {
     if (document.querySelector('#loading-css')) return;
-    
+      
     var style = document.createElement('style');
     style.id = 'loading-css';
     style.textContent = '' +
@@ -867,7 +1036,7 @@ function showError(message) {
     if (window.UI && window.UI.Notification && window.UI.Notification.error) {
         window.UI.Notification.error('System Error', message);
     }
-    
+      
     // Legacy fallback
     var el = document.getElementById('systemError') || (function() {
         var div = document.createElement('div');
@@ -877,7 +1046,7 @@ function showError(message) {
         injectErrorCSS();
         return div;
     })();
-    
+      
     el.textContent = 'ByteWard Error: ' + message;
     el.style.display = 'block';
     setTimeout(function() { el.style.display = 'none'; }, 5000);
@@ -885,7 +1054,7 @@ function showError(message) {
 
 function injectErrorCSS() {
     if (document.querySelector('#error-css')) return;
-    
+      
     var style = document.createElement('style');
     style.id = 'error-css';
     style.textContent = '' +
@@ -909,32 +1078,27 @@ function injectErrorCSS() {
 // =======================
 // Utility Functions
 // =======================
-function generateGitHubAvatar(email) {
-    if (!email) return 'https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=6b7280';
-    
-    var hash = email.split('').reduce(function(acc, char) {
-        return char.charCodeAt(0) + ((acc << 5) - acc);
-    }, 0);
-    
-    var seed = Math.abs(hash) || 12345;
-    return 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=6b7280';
+// Fungsi global untuk generate avatar default (DiceBear)
+function generateDefaultAvatar(seed) {
+    const defaultSeed = seed || 'user' + Date.now();
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultSeed)}&backgroundColor=6b7280`;
 }
 
 function initializeUISystem() {
     console.log('🚀 Initializing UI System v' + UI_CONFIG.version);
-    
+      
     // Inject required CSS
     injectProfileCSS();
-    
+      
     // Initialize notification system
     var notificationManager = new NotificationManager();
     window.UI.Notification = notificationManager;
-    
+      
     // Create profile button if user is logged in
     if (window.Auth && window.Auth.currentUser) {
         setTimeout(function() { createProfileButton(); }, 1000);
     }
-    
+      
     console.log('✅ UI System initialized successfully');
 }
 
@@ -945,7 +1109,7 @@ window.UI = window.UI || {};
 Object.assign(window.UI, {
     // Configuration
     config: UI_CONFIG,
-    
+      
     // Profile System
     createProfileButton: createProfileButton,
     updateProfileButton: updateProfileButton,
@@ -960,21 +1124,21 @@ Object.assign(window.UI, {
     showStatus: showStatus,
     saveProfile: saveProfile,
     updateSaveButtonState: updateSaveButtonState,
-    
+      
     // CSS Management
     injectProfileCSS: injectProfileCSS,
     injectFallbackCSS: injectFallbackCSS,
-    
+      
     // Loading System
     showAuthLoading: showAuthLoading,
     hideAuthLoading: hideAuthLoading,
-    
+      
     // Error Handling
     showError: showError,
-    
+      
     // Utility
-    generateGitHubAvatar: generateGitHubAvatar,
-    
+    generateDefaultAvatar: generateDefaultAvatar,
+      
     // Initialization
     initialize: initializeUISystem
 });
@@ -986,4 +1150,4 @@ if (document.readyState === 'loading') {
     setTimeout(initializeUISystem, 100);
 }
 
-console.log('🎨 UI Module v0.1.9 - Advanced UI System Ready');
+console.log('🎨 UI Module v0.2.0 - Advanced UI System Ready');
