@@ -1,17 +1,27 @@
 // loader.js
-// ByteWard Loader v0.3.0
-// Loader murni - load semua JS dari assets/js
+// ByteWard Loader v0.3.1
+// FIXED: mobile-safe base path detection
 
 console.log('⏳ Loader ByteWard dijalankan...');
 
 (function () {
 
-    // 🔥 Auto-detect folder tempat loader.js berada
-    const currentScript = document.currentScript;
-    const BASE_PATH = currentScript.src
-        .split('/')
-        .slice(0, -1)
-        .join('/');
+    function getBasePath() {
+        const scripts = document.getElementsByTagName('script');
+        const loaderScript = scripts[scripts.length - 1];
+
+        if (!loaderScript || !loaderScript.src) {
+            console.error('[LOADER ❌] Tidak bisa mendeteksi lokasi loader.js');
+            return '';
+        }
+
+        return loaderScript.src
+            .split('/')
+            .slice(0, -1)
+            .join('/');
+    }
+
+    const BASE_PATH = getBasePath();
 
     const SCRIPTS = [
         'firebase.config.js',
@@ -36,7 +46,7 @@ console.log('⏳ Loader ByteWard dijalankan...');
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = `${BASE_PATH}/${file}`;
-            script.async = false; // jaga urutan
+            script.async = false;
 
             script.onload = () => {
                 log(`Berhasil memuat: ${file}`);
@@ -52,7 +62,8 @@ console.log('⏳ Loader ByteWard dijalankan...');
     }
 
     (async () => {
-        log('Mulai memuat modul dari assets/js');
+        log('Mulai memuat semua modul...');
+        log('Base path terdeteksi:', BASE_PATH);
 
         try {
             for (const file of SCRIPTS) {
@@ -61,7 +72,6 @@ console.log('⏳ Loader ByteWard dijalankan...');
 
             log('✅ Semua modul berhasil dimuat');
 
-            // Jalankan pengecekan akses terakhir
             if (window.ByteWard?.checkPageAccess) {
                 window.ByteWard.checkPageAccess();
             }
