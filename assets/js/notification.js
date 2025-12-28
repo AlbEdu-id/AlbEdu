@@ -48,6 +48,11 @@ class NotificationSystem {
             this.container.id = 'notification-container';
             this.container.className = 'notification-container';
             
+            // --- TAMBAHKAN BARIS INI ---
+// Memastikan notifikasi selalu di atas segalanya (termasuk Modal/Panel)
+this.container.style.zIndex = '999999';
+// ---------------------------
+            
             // Add to body
             document.body.appendChild(this.container);
             
@@ -533,3 +538,4 @@ function setupGlobal() {
     
     console.log('🔔 Notification System Ready');
 }
+
