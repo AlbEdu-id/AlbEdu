@@ -1,9 +1,8 @@
 /* ========================
-   HYPEROS NOTIFICATION SYSTEM
+   NOTIFICATION SYSTEM - SAME AS ORIGINAL HTML
    ======================== */
 
 :root {
-    /* Mobile Theme */
     --bg-dark: #000;
     --notif-light: rgba(255, 255, 255, 0.94);
     --fluid-curve: cubic-bezier(0.2, 1, 0.2, 1);
@@ -16,17 +15,19 @@
     --desktop-subtext-light: rgba(60, 60, 67, 0.6);
 }
 
-/* Notification Container */
-.hyperos-notification-container {
+/* Notification Container - SAMA PERSIS */
+.notification-container {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 10000;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
-/* Mobile Mode */
-.mobile-mode.hyperos-notification-container .hyperos-notification {
+/* ======================== 
+   MOBILE: FLUID STACK V4 - SAMA PERSIS
+   ======================== */
+.mobile-mode .notification-item {
     position: absolute;
     left: 50%;
     top: 0;
@@ -44,7 +45,7 @@
                 opacity 0.5s ease;
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.spawn { 
+.mobile-mode .notification-item.spawn { 
     width: 40px; 
     height: 40px; 
     border-radius: 20px; 
@@ -52,7 +53,7 @@
     transform: translate(-50%, -120px) scale(0.3); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.active { 
+.mobile-mode .notification-item.active { 
     width: 370px; 
     max-width: 90vw;
     height: 78px; 
@@ -62,7 +63,7 @@
     z-index: 100; 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.layer-1 { 
+.mobile-mode .notification-item.layer-1 { 
     width: 330px; 
     max-width: 85vw;
     height: 68px; 
@@ -72,7 +73,7 @@
     z-index: 90; 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.layer-2 { 
+.mobile-mode .notification-item.layer-2 { 
     width: 290px; 
     max-width: 80vw;
     height: 58px; 
@@ -82,13 +83,36 @@
     z-index: 80; 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.exit { 
+.mobile-mode .notification-item.exit { 
     transform: translate(-50%, -160px) scale(0); 
     opacity: 0; 
 }
 
-/* Desktop Mode */
-.desktop-mode.hyperos-notification-container .hyperos-notification {
+/* Progress Mobile - Horizontal - SAMA PERSIS */
+.mobile-mode .progress-track {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(0,0,0,0.05);
+    overflow: hidden;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.mobile-mode .progress-bar { 
+    height: 100%; 
+    width: 100%; 
+    transform-origin: left;
+    transform: scaleX(1);
+    filter: blur(0.5px);
+}
+
+/* ======================== 
+   DESKTOP: DIPERBESAR (SKALA 1.3x) - SAMA PERSIS
+   ======================== */
+.desktop-mode .notification-item {
     position: absolute;
     right: 40px;
     bottom: 40px;
@@ -109,52 +133,23 @@
     padding-left: 6px;
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification-content { 
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
-
-.desktop-mode.hyperos-notification-container .hyperos-notification.spawn { 
+.desktop-mode .notification-item.spawn { 
     transform: translateX(120%); 
     opacity: 0; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.active { 
+.desktop-mode .notification-item.active { 
     transform: translateY(var(--y-offset)); 
     opacity: 1; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.exit { 
+.desktop-mode .notification-item.exit { 
     transform: translateX(120%) translateY(var(--y-offset)); 
     opacity: 0; 
 }
 
-/* Progress Bar Styles */
-/* Mobile Progress - Horizontal */
-.mobile-mode.hyperos-notification-container .hyperos-progress-track {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: rgba(0,0,0,0.05);
-    overflow: hidden;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-}
-
-.mobile-mode.hyperos-notification-container .hyperos-progress-bar { 
-    height: 100%; 
-    width: 100%; 
-    transform-origin: left;
-    transform: scaleX(1);
-    filter: blur(0.5px);
-    transition: transform linear;
-}
-
-/* Desktop Progress - Vertical Liquid */
-.desktop-mode.hyperos-notification-container .hyperos-progress-track {
+/* Progress Desktop - Vertical Liquid - SAMA PERSIS */
+.desktop-mode .progress-track {
     position: absolute;
     top: 30px;
     bottom: 30px;
@@ -166,27 +161,28 @@
     overflow: hidden;
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-progress-bar {
+.desktop-mode .progress-bar {
     width: 100%;
     height: 100%;
     transform-origin: bottom;
     transform: scaleY(1);
-    transition: transform linear;
 }
 
-/* Universal Content */
-.hyperos-notification-icon { 
+/* ======================== 
+   UNIVERSAL CONTENT - SAMA PERSIS
+   ======================== */
+.notification-icon { 
     min-width: 70px; 
     display: flex; 
     justify-content: center; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification-icon {
+.desktop-mode .notification-icon {
     min-width: 80px;
     padding-left: 8px;
 }
 
-.hyperos-icon-blob {
+.icon-blob {
     width: 54px;
     height: 54px;
     border-radius: 100px;
@@ -196,23 +192,23 @@
     color: white;
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-icon-blob {
+.desktop-mode .icon-blob {
     width: 68px;
     height: 68px;
     border-radius: 20px;
 }
 
-.hyperos-notification-text { 
+.notification-text { 
     flex: 1; 
     padding: 0 12px; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification-text {
+.desktop-mode .notification-text {
     padding-right: 32px;
 }
 
-/* Typography */
-.hyperos-text-small { 
+/* Typography - SAMA PERSIS */
+.text-small { 
     font-size: 11px; 
     font-weight: 700; 
     text-transform: uppercase; 
@@ -220,148 +216,114 @@
     margin-bottom: 2px; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-text-small {
+.desktop-mode .text-small {
     font-size: 13px;
     letter-spacing: 0.6px;
     margin-bottom: 4px;
 }
 
-.hyperos-text-main { 
+.text-main { 
     font-size: 15px; 
     font-weight: 600; 
     line-height: 1.3; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-text-main {
+.desktop-mode .text-main {
     font-size: 20px;
     font-weight: 700;
     line-height: 1.4;
 }
 
-/* Mobile Colors */
-.mobile-mode.hyperos-notification-container .hyperos-text-small { 
+/* Mobile Colors - SAMA PERSIS */
+.mobile-mode .text-small { 
     color: rgba(0,0,0,0.5); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-text-main { 
+.mobile-mode .text-main { 
     color: #000; 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification:not(.active) .hyperos-notification-text { 
+.mobile-mode .notification-item:not(.active) .notification-text { 
     opacity: 0; 
 }
 
-/* Desktop Colors */
-.desktop-mode.hyperos-notification-container .hyperos-text-small { 
+/* Desktop Colors - SAMA PERSIS */
+.desktop-mode .text-small { 
     color: var(--desktop-subtext-light); 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-text-main { 
+.desktop-mode .text-main { 
     color: var(--desktop-text-light); 
 }
 
-/* Desktop Content Animation */
-.desktop-mode.hyperos-notification-container .hyperos-stagger {
+/* DESKTOP CONTENT ANIMATION - SAMA PERSIS */
+.desktop-mode .stagger {
     opacity: 0;
     transform: translateY(12px);
     transition: 0.6s var(--fluid-curve);
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.active .hyperos-stagger:nth-child(1) {
+.desktop-mode .notification-item.active .stagger:nth-child(1) {
     opacity: 1;
     transform: translateY(0);
     transition-delay: 0.1s;
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.active .hyperos-stagger:nth-child(2) {
+.desktop-mode .notification-item.active .stagger:nth-child(2) {
     opacity: 1;
     transform: translateY(0);
     transition-delay: 0.2s;
 }
 
-/* Notification Types */
+/* THEMES - SAMA PERSIS */
 /* Success */
-.hyperos-notification.success .hyperos-icon-blob { 
+.success .icon-blob { 
     background: #34c759; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.success .hyperos-progress-bar { 
+.desktop-mode .success .progress-bar { 
     background: linear-gradient(to top, rgba(52, 199, 89, 0.2), #34c759); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.success .hyperos-progress-bar { 
+.mobile-mode .success .progress-bar { 
     background: #34c759; 
 }
 
 /* Error */
-.hyperos-notification.error .hyperos-icon-blob { 
+.error .icon-blob { 
     background: #ff3b30; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.error .hyperos-progress-bar { 
+.desktop-mode .error .progress-bar { 
     background: linear-gradient(to top, rgba(255, 59, 48, 0.2), #ff3b30); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.error .hyperos-progress-bar { 
+.mobile-mode .error .progress-bar { 
     background: #ff3b30; 
 }
 
 /* Warning */
-.hyperos-notification.warning .hyperos-icon-blob { 
+.warning .icon-blob { 
     background: #ff9500; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.warning .hyperos-progress-bar { 
+.desktop-mode .warning .progress-bar { 
     background: linear-gradient(to top, rgba(255, 149, 0, 0.2), #ff9500); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.warning .hyperos-progress-bar { 
+.mobile-mode .warning .progress-bar { 
     background: #ff9500; 
 }
 
 /* Info */
-.hyperos-notification.info .hyperos-icon-blob { 
+.info .icon-blob { 
     background: #007aff; 
 }
 
-.desktop-mode.hyperos-notification-container .hyperos-notification.info .hyperos-progress-bar { 
+.desktop-mode .info .progress-bar { 
     background: linear-gradient(to top, rgba(0, 122, 255, 0.2), #007aff); 
 }
 
-.mobile-mode.hyperos-notification-container .hyperos-notification.info .hyperos-progress-bar { 
+.mobile-mode .info .progress-bar { 
     background: #007aff; 
-}
-
-/* Responsive Breakpoints */
-@media (max-width: 768px) {
-    .desktop-mode.hyperos-notification-container {
-        display: none;
-    }
-    
-    .mobile-mode.hyperos-notification-container {
-        display: block;
-    }
-}
-
-@media (min-width: 769px) {
-    .mobile-mode.hyperos-notification-container {
-        display: none;
-    }
-    
-    .desktop-mode.hyperos-notification-container {
-        display: block;
-    }
-}
-
-/* Touch Device Optimization */
-@media (hover: none) and (pointer: coarse) {
-    .desktop-mode.hyperos-notification-container .hyperos-notification {
-        padding-right: 24px;
-        width: 350px;
-    }
-    
-    .desktop-mode.hyperos-notification-container .hyperos-icon-blob {
-        width: 56px;
-        height: 56px;
-    }
 }
