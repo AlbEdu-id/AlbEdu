@@ -42,6 +42,9 @@ class HyperOSNotification {
      * Initialize the notification system
      */
     init() {
+        // Load CSS styles first
+        this.loadCSS();
+        
         // Create container if not exists
         if (!document.getElementById('hyperos-notification-container')) {
             this.container = document.createElement('div');
@@ -62,6 +65,250 @@ class HyperOSNotification {
         } else {
             this.container = document.getElementById('hyperos-notification-container');
         }
+    }
+    
+    /**
+     * Load CSS styles from asset/css/notification.css
+     */
+    loadCSS() {
+        // Check if CSS is already loaded
+        if (document.querySelector('link[href*="notification.css"]')) {
+            return;
+        }
+        
+        // Create link element
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'asset/css/notification.css';
+        link.id = 'hyperos-notification-css';
+        
+        // Add to document head
+        document.head.appendChild(link);
+        
+        console.log('📦 HyperOS Notification CSS Loaded');
+        
+        // Fallback: If CSS fails to load, inject inline styles
+        link.onerror = () => {
+            console.warn('⚠️ Failed to load external CSS, injecting inline styles');
+            this.injectFallbackCSS();
+        };
+    }
+    
+    /**
+     * Inject fallback inline CSS if external CSS fails to load
+     */
+    injectFallbackCSS() {
+        if (document.getElementById('hyperos-fallback-css')) {
+            return;
+        }
+        
+        const style = document.createElement('style');
+        style.id = 'hyperos-fallback-css';
+        style.textContent = `
+            .hyperos-notification-container {
+                position: fixed;
+                z-index: 9999;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+            
+            .hyperos-notification-container.desktop-mode {
+                top: 24px;
+                right: 24px;
+                width: 400px;
+            }
+            
+            .hyperos-notification-container.mobile-mode {
+                bottom: 20px;
+                left: 16px;
+                right: 16px;
+            }
+            
+            .hyperos-notification {
+                position: relative;
+                overflow: hidden;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 12px;
+                backdrop-filter: blur(20px);
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                color: white;
+                transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
+                transform-origin: center;
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            
+            .hyperos-notification.success {
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+            }
+            
+            .hyperos-notification.error {
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+            }
+            
+            .hyperos-notification.warning {
+                background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.95));
+            }
+            
+            .hyperos-notification.info {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95));
+            }
+            
+            .hyperos-notification.spawn {
+                animation: hyperosSpawn 0.6s cubic-bezier(0.2, 0, 0, 1) forwards;
+            }
+            
+            .hyperos-notification.active {
+                opacity: 1;
+                transform: translateY(var(--y-offset, 0)) scale(1);
+            }
+            
+            .hyperos-notification.layer-1 {
+                opacity: 0.7;
+                transform: translateY(-30px) scale(0.95);
+            }
+            
+            .hyperos-notification.layer-2 {
+                opacity: 0.4;
+                transform: translateY(-60px) scale(0.9);
+            }
+            
+            .hyperos-notification.exit {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.9);
+                pointer-events: none;
+            }
+            
+            .hyperos-notification-icon {
+                position: absolute;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .hyperos-icon-blob {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            }
+            
+            .hyperos-icon-blob .material-icons-round {
+                font-size: 24px;
+            }
+            
+            .hyperos-notification-text {
+                margin-left: 68px;
+                padding-right: 20px;
+            }
+            
+            .hyperos-text-small {
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0.9;
+                margin-bottom: 4px;
+            }
+            
+            .hyperos-text-main {
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 1.4;
+            }
+            
+            .hyperos-progress-track {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                overflow: hidden;
+            }
+            
+            .hyperos-progress-bar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.3);
+                transform-origin: left center;
+            }
+            
+            .hyperos-stagger {
+                opacity: 0;
+                animation: hyperosStagger 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+                animation-delay: 0.1s;
+            }
+            
+            @keyframes hyperosSpawn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(20px) scale(0.95);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            
+            @keyframes hyperosStagger {
+                from {
+                    opacity: 0;
+                    transform: translateY(5px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .hyperos-notification {
+                    padding: 18px;
+                    border-radius: 14px;
+                }
+                
+                .hyperos-notification-icon {
+                    width: 40px;
+                    height: 40px;
+                }
+                
+                .hyperos-icon-blob {
+                    width: 40px;
+                    height: 40px;
+                }
+                
+                .hyperos-notification-text {
+                    margin-left: 56px;
+                }
+                
+                .hyperos-text-small {
+                    font-size: 13px;
+                }
+                
+                .hyperos-text-main {
+                    font-size: 15px;
+                }
+                
+                .hyperos-progress-bar {
+                    transform-origin: top center;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
     }
     
     /**
