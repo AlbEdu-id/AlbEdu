@@ -35,7 +35,12 @@ class HyperOSNotification {
             }
         };
         
-        this.init();
+        // Initialize after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
     
     /**
@@ -50,7 +55,20 @@ class HyperOSNotification {
             this.container = document.createElement('div');
             this.container.id = 'hyperos-notification-container';
             this.container.className = 'hyperos-notification-container';
-            document.body.appendChild(this.container);
+            
+            // Ensure body exists before appending
+            if (document.body) {
+                document.body.appendChild(this.container);
+            } else {
+                // Fallback: wait for body to be available
+                const observer = new MutationObserver(() => {
+                    if (document.body) {
+                        document.body.appendChild(this.container);
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+            }
             
             // Load Material Icons if not already loaded
             this.loadMaterialIcons();
@@ -335,6 +353,8 @@ class HyperOSNotification {
      * Update container mode (mobile/desktop) based on screen width
      */
     updateMode() {
+        if (!this.container) return;
+        
         const isDesktop = window.innerWidth > 768;
         this.container.className = `hyperos-notification-container ${isDesktop ? 'desktop-mode' : 'mobile-mode'}`;
         
@@ -358,6 +378,12 @@ class HyperOSNotification {
      * @returns {string} Notification ID
      */
     show(options) {
+        // Ensure container exists
+        if (!this.container) {
+            console.warn('⚠️ Notification container not ready yet');
+            return null;
+        }
+        
         const {
             type = 'info',
             title = null,
@@ -471,6 +497,8 @@ class HyperOSNotification {
      * Update notification UI based on position in stack
      */
     refreshUI() {
+        if (!this.container) return;
+        
         const isDesktop = window.innerWidth > 768;
         const aliveNotifications = Array.from(this.notifications.values())
             .filter(item => !item.isDead);
@@ -676,29 +704,51 @@ class HyperOSNotification {
     addType(type, config) {
         this.config[type] = config;
     }
+    
+    /**
+     * Check if notification system is ready
+     */
+    isReady() {
+        return this.container !== null;
+    }
 }
 
-// Create global instance
-const HyperOSNotifications = new HyperOSNotification();
+// Initialize after DOM is fully loaded
+let HyperOSNotifications;
 
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = HyperOSNotifications;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    HyperOSNotifications = new HyperOSNotification();
+    
+    // Export for module usage
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = HyperOSNotifications;
+    }
+    
+    // Attach to window for global access
+    window.HyperOS = window.HyperOS || {};
+    window.HyperOS.Notifications = HyperOSNotifications;
+    
+    // Quick access methods
+    window.notify = {
+        success: (title, message, duration) => HyperOSNotifications.success(title, message, duration),
+        error: (title, message, duration) => HyperOSNotifications.error(title, message, duration),
+        warning: (title, message, duration) => HyperOSNotifications.warning(title, message, duration),
+        info: (title, message, duration) => HyperOSNotifications.info(title, message, duration),
+        show: (options) => HyperOSNotifications.show(options),
+        dismiss: (id) => HyperOSNotifications.dismiss(id),
+        clearAll: () => HyperOSNotifications.clearAll(),
+        isReady: () => HyperOSNotifications.isReady()
+    };
+    
+    console.log('🔔 HyperOS Notification System Ready - Use window.notify.success(), window.notify.error(), etc.');
+});
 
-// Attach to window for global access
-window.HyperOS = window.HyperOS || {};
-window.HyperOS.Notifications = HyperOSNotifications;
-
-// Quick access methods
-window.notify = {
-    success: (title, message, duration) => HyperOSNotifications.success(title, message, duration),
-    error: (title, message, duration) => HyperOSNotifications.error(title, message, duration),
-    warning: (title, message, duration) => HyperOSNotifications.warning(title, message, duration),
-    info: (title, message, duration) => HyperOSNotifications.info(title, message, duration),
-    show: (options) => HyperOSNotifications.show(options),
-    dismiss: (id) => HyperOSNotifications.dismiss(id),
-    clearAll: () => HyperOSNotifications.clearAll()
-};
-
-console.log('🔔 HyperOS Notification System Ready - Use window.notify.success(), window.notify.error(), etc.');
+// Fallback for scripts that might load before DOMContentLoaded
+window.addEventListener('load', () => {
+    if (!window.HyperOS || !window.HyperOS.Notifications) {
+        console.warn('HyperOS Notifications not initialized, retrying...');
+        if (!HyperOSNotifications) {
+            HyperOSNotifications = new HyperOSNotification();
+        }
+    }
+});
