@@ -1,7 +1,6 @@
 /**
- * Notification System v3.0
+ * Notification System v3.0 - Core Module
  * Modern, responsive notification system
- * EXACT SAME as the original HTML example
  */
 
 class NotificationSystem {
@@ -12,7 +11,7 @@ class NotificationSystem {
         this.maxMobile = 3;
         this.autoId = 0;
         
-        // Default configurations - SAME AS ORIGINAL
+        // Default configurations
         this.config = {
             success: {
                 icon: "check_circle",
@@ -124,7 +123,7 @@ class NotificationSystem {
         const id = `notification-${Date.now()}-${this.autoId++}`;
         const isDesktop = window.innerWidth > 768;
         
-        // Create element - SAME STRUCTURE AS ORIGINAL HTML
+        // Create element
         const element = document.createElement('div');
         element.id = id;
         element.className = `notification-item ${finalType} spawn`;
@@ -134,7 +133,7 @@ class NotificationSystem {
         const textSmallClass = isDesktop ? 'stagger' : '';
         const textMainClass = isDesktop ? 'stagger' : '';
         
-        // SAME HTML STRUCTURE AS ORIGINAL
+        // HTML Structure
         element.innerHTML = `
             <div class="notification-icon ${iconClass}">
                 <div class="icon-blob">
@@ -169,7 +168,7 @@ class NotificationSystem {
         // Add to container
         this.container.appendChild(element);
         
-        // Animate in - SAME TIMING AS ORIGINAL
+        // Animate in
         requestAnimationFrame(() => {
             setTimeout(() => {
                 this.refreshUI();
@@ -184,7 +183,7 @@ class NotificationSystem {
                         progressBar.style.transform = isDesktop ? "scaleY(0)" : "scaleX(0)";
                     });
                 }
-            }, 40); // SAME DELAY
+            }, 40);
         });
         
         // Auto dismiss
@@ -274,7 +273,7 @@ class NotificationSystem {
                 element.parentNode.removeChild(element);
             }
             this.notifications.delete(id);
-        }, 800); // SAME TIMING
+        }, 800);
     }
     
     pause(id) {
@@ -311,7 +310,7 @@ class NotificationSystem {
                 notification.timer = setTimeout(() => this.dismiss(id), remaining);
                 notification.pausedProgress = null;
             }
-        }, 500); // SAME DELAY
+        }, 500);
     }
     
     bindSwipe(notification) {
@@ -324,7 +323,7 @@ class NotificationSystem {
         
         element.addEventListener('touchend', (e) => {
             const endY = e.changedTouches[0].clientY;
-            if (startY - endY > 40) { // SAME THRESHOLD
+            if (startY - endY > 40) {
                 this.dismiss(notification.id);
             }
         }, { passive: true });
