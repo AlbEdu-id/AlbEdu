@@ -1,6 +1,5 @@
-// ByteWard Auth Module v0.2.0 - Authentication & User Data dengan DiceBear
-
-console.log('🔐 Memuat Auth Module v0.2.0...');
+// ByteWard Auth Module v0.3.0 - Terintegrasi dengan HyperOS Notifications
+console.log('🔐 Memuat Auth Module v0.3.0...');
 
 // Global State
 let currentUser = null;
@@ -11,13 +10,43 @@ let userProfileState = null;
 let profileListener = null;
 let redirectInProgress = false;
 
+// Fungsi untuk menampilkan notifikasi dengan fallback
+function showNotification(type, title, message, duration) {
+    // Priority 1: HyperOS Notification System
+    if (window.HyperOS && window.HyperOS.Notifications) {
+        return window.HyperOS.Notifications[type](title, message, duration);
+    }
+    
+    // Priority 2: window.notify shortcut
+    if (window.notify && window.notify[type]) {
+        return window.notify[type](title, message, duration);
+    }
+    
+    // Priority 3: Legacy notification system (if exists)
+    if (window.UI && window.UI.Notification) {
+        const types = {
+            success: 'success',
+            error: 'error',
+            warning: 'warning',
+            info: 'info'
+        };
+        if (window.UI.Notification[type]) {
+            return window.UI.Notification[type](title, message, duration);
+        }
+    }
+    
+    // Fallback: console log
+    console[type === 'error' ? 'error' : 'log'](`${title}: ${message}`);
+    return null;
+}
+
 // Fungsi global untuk generate avatar default (DiceBear)
 function generateDefaultAvatar(seed) {
     const defaultSeed = seed || 'user' + Date.now();
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultSeed)}&backgroundColor=6b7280`;
 }
 
-// Avatar constants - HANYA avatar untuk pilihan profil (bukan default)
+// Avatar constants
 const PROFILE_AVATARS = [
     {
         id: 'male1',
@@ -133,9 +162,7 @@ async function fetchUserData(userId) {
                             const currentName = document.querySelector('.current-name');
 
                             if (currentAvatar) {
-                                // Gunakan avatar yang ada atau default
                                 currentAvatar.src = userData.foto_profil || generateDefaultAvatar(currentUser.email);
-                                // Tambahkan event listener untuk error handling
                                 currentAvatar.onerror = function() {
                                     this.src = generateDefaultAvatar(currentUser.email);
                                 };
@@ -148,6 +175,7 @@ async function fetchUserData(userId) {
 
                 } else {
                     console.log('📝 Data user belum ada, membuat data baru...');
+                    showNotification('info', 'Info', 'Membuat profil baru...', 3000);
                     const newData = await createUserData(userId);
                     if (!resolved) {
                         resolved = true;
@@ -156,12 +184,14 @@ async function fetchUserData(userId) {
                 }
             } catch (error) {
                 console.error('Error in user data listener:', error);
+                showNotification('error', 'Kesalahan Data', 'Gagal memuat data pengguna', 5000);
                 if (!resolved) {
                     reject(error);
                 }
             }
         }, (error) => {
             console.error('Firestore listener error:', error);
+            showNotification('error', 'Koneksi Gagal', 'Gagal terhubung ke database', 5000);
             if (!resolved) {
                 reject(error);
             }
@@ -185,6 +215,7 @@ async function createUserData(userId) {
     };
 
     await firebaseDb.collection('users').doc(userId).set(payload);
+    showNotification('success', 'Profil Baru', 'Profil berhasil dibuat', 4000);
     console.log('✅ Data user baru berhasil dibuat');
     return payload;
 }
@@ -204,11 +235,14 @@ async function authLogin() {
         const result = await firebaseAuth.signInWithPopup(provider);
 
         console.log('✅ Login sukses:', result.user.email);
+        showNotification('success', 'Login Berhasil', `Selamat datang, ${result.user.displayName || result.user.email}`, 4000);
+        
         if (window.UI) window.UI.showAuthLoading('Login berhasil, menyiapkan sistem…');
 
         return result.user;
     } catch (error) {
         console.error('❌ Error login:', error);
+        showNotification('error', 'Login Gagal', error.message || 'Terjadi kesalahan saat login', 5000);
         if (window.UI) window.UI.hideAuthLoading();
         throw new Error(error.message || 'Login Google gagal');
     }
@@ -225,6 +259,7 @@ async function authLogout() {
 
         await firebaseAuth.signOut();
         console.log('✅ Logout berhasil');
+        showNotification('info', 'Logout Berhasil', 'Anda telah keluar dari sistem', 3000);
 
         const profileContainer = document.querySelector('.profile-button-container');
         if (profileContainer) profileContainer.remove();
@@ -241,6 +276,7 @@ async function authLogout() {
         if (window.ByteWard) window.ByteWard.redirectAfterLogout();
     } catch (error) {
         console.error('❌ Error logout:', error);
+        showNotification('error', 'Logout Gagal', 'Gagal melakukan logout', 5000);
         if (window.UI) window.UI.showError('Gagal logout.');
     }
 }
@@ -249,16 +285,25 @@ async function authLogout() {
 // System Initialization
 // =======================
 async function initializeSystem() {
-    console.log('⚙️ Menginisialisasi ByteWard v0.2.0...');
+    console.log('⚙️ Menginisialisasi ByteWard v0.3.0...');
     console.log('📍 Konfigurasi:', window.ByteWard ? window.ByteWard.APP_CONFIG : 'N/A');
     console.log('📍 Base Path:', window.ByteWard ? window.ByteWard.getBasePath() : 'N/A');
     console.log('📍 Current Path:', window.location.pathname);
     console.log('📍 Is Login Page:', window.ByteWard ? window.ByteWard.isLoginPage() : 'N/A');
     console.log('📍 Within App Scope:', window.ByteWard ? window.ByteWard.isWithinAppScope() : 'N/A');
 
+    // Check for HyperOS Notifications
+    if (window.HyperOS && window.HyperOS.Notifications) {
+        console.log('✅ HyperOS Notification System terdeteksi');
+    } else if (window.notify) {
+        console.log('✅ window.notify shortcut terdeteksi');
+    } else {
+        console.warn('⚠️ Notification system tidak ditemukan, menggunakan console fallback');
+    }
+
     if (typeof firebase === 'undefined' || !firebase.auth) {
         console.error('❌ Firebase tidak tersedia');
-        if (window.UI) window.UI.showError('Firebase belum dimuat. Silakan refresh halaman.');
+        showNotification('error', 'Firebase Error', 'Firebase belum dimuat. Silakan refresh halaman.', 5000);
         if (window.UI) window.UI.hideAuthLoading();
         return;
     }
@@ -316,7 +361,7 @@ async function initializeSystem() {
             if (err.message) errorMsg += ': ' + err.message;
             if (err.code) errorMsg += ' (Code: ' + err.code + ')';
 
-            if (window.UI) window.UI.showError(errorMsg);
+            showNotification('error', 'Auth Error', errorMsg, 5000);
         } finally {
             if (window.UI) window.UI.hideAuthLoading();
         }
@@ -329,7 +374,7 @@ async function initializeSystem() {
 // Debug & Testing
 // =======================
 function debugByteWard() {
-    console.log('=== ByteWard Debug Info v0.2.0 ===');
+    console.log('=== ByteWard Debug Info v0.3.0 ===');
     console.log('Configuration:', window.ByteWard ? window.ByteWard.APP_CONFIG : 'N/A');
     console.log('Base Path Function:', window.ByteWard ? window.ByteWard.getBasePath() : 'N/A');
     console.log('Full Login Path:', window.ByteWard ? window.ByteWard.buildFullPath(window.ByteWard.APP_CONFIG.REDIRECT_PATHS.login) : 'N/A');
@@ -342,6 +387,7 @@ function debugByteWard() {
     console.log('Within App Scope:', window.ByteWard ? window.ByteWard.isWithinAppScope() : 'N/A');
     console.log('Auth Ready:', authReady);
     console.log('Redirect in Progress:', redirectInProgress);
+    console.log('Notification System:', window.HyperOS ? 'HyperOS' : window.notify ? 'Notify Shortcut' : 'None');
     console.log('==========================');
 }
 
@@ -352,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof firebaseAuth === 'undefined') {
             console.error('❌ Firebase belum siap');
-            if (window.UI) window.UI.showError('Firebase tidak tersedia');
+            showNotification('error', 'Firebase Error', 'Firebase tidak tersedia', 5000);
             return;
         }
 
@@ -372,7 +418,8 @@ window.Auth = {
     debugByteWard,
     checkProfileCompleteness,
     generateDefaultAvatar,
-    PROFILE_AVATARS
+    PROFILE_AVATARS,
+    showNotification // Ekspos fungsi notifikasi
 };
 
 // Property-based state access
@@ -403,4 +450,4 @@ Object.defineProperties(window.Auth, {
     }
 });
 
-console.log('🔐 Auth Module v0.2.0 - Authentication siap.');
+console.log('🔐 Auth Module v0.3.0 - Authentication siap dengan HyperOS Integration.');
