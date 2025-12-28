@@ -1,329 +1,371 @@
-/* ========================
-   NOTIFICATION SYSTEM - SAME AS ORIGINAL HTML
-   ======================== */
+/* ========================  
+   NOTIFICATION SYSTEM - PREMIUM UPGRADE
+   (Glassmorphism & Depth Enhanced)
+   ======================== */  
 
-:root {
-    --bg-dark: #000;
-    --notif-light: rgba(255, 255, 255, 0.94);
-    --fluid-curve: cubic-bezier(0.2, 1, 0.2, 1);
+:root {  
+    --bg-dark: #000;  
     
-    /* Desktop Premium Light Theme */
-    --desktop-bg-light: rgba(255, 255, 255, 0.95);
-    --desktop-text-light: #1d1d1f;
-    --desktop-border-light: rgba(0, 0, 0, 0.08);
-    --desktop-track-light: rgba(0, 0, 0, 0.06);
-    --desktop-subtext-light: rgba(60, 60, 67, 0.6);
-}
+    /* Mobile Light Theme - Lebih transparan untuk efek blur */
+    --notif-light: rgba(255, 255, 255, 0.88);  
+    
+    /* Animation Curve */
+    --fluid-curve: cubic-bezier(0.2, 1, 0.2, 1);  
+      
+    /* Desktop Premium Glass Theme */  
+    /* Gradient base yang halus */
+    --desktop-bg-light: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)); 
+    --desktop-text-light: #1d1d1f;  
+    
+    /* Highlight putih di border atas (efek cahaya) */
+    --desktop-border-light: rgba(255, 255, 255, 0.5); 
+    
+    --desktop-track-light: rgba(0, 0, 0, 0.04);  
+    --desktop-subtext-light: rgba(60, 60, 67, 0.7);  
+}  
 
-/* Notification Container - SAMA PERSIS */
-.notification-container {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 10000;
-    font-family: 'Inter', sans-serif;
-}
+/* Notification Container - SAMA PERSIS */  
+.notification-container {  
+    position: fixed;  
+    inset: 0;  
+    pointer-events: none;  
+    z-index: 10000;  
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;  
+}  
 
-/* ======================== 
-   MOBILE: FLUID STACK V4 - SAMA PERSIS
+/* ========================   
+   MOBILE: FLUID STACK V4 - PREMIUM LOOK
+   ======================== */  
+.mobile-mode .notification-item {  
+    position: absolute;  
+    left: 50%;  
+    top: 0;  
+    
+    /* Visual Upgrade: Lebih tajam & clean */
+    background: var(--notif-light);  
+    backdrop-filter: blur(50px) saturate(200%);  
+    -webkit-backdrop-filter: blur(50px) saturate(200%);
+    
+    /* Shadow yang lebih halus tapi "pop-up" */
+    box-shadow: 
+        0 12px 40px -8px rgba(0,0,0,0.18),
+        0 0 0 1px rgba(0,0,0,0.06); /* Border tipis halus */
+    
+    display: flex;  
+    align-items: center;  
+    pointer-events: auto;  
+    overflow: hidden;  
+    
+    /* Animasi Tetap Sama Persis */
+    transition: transform 0.8s var(--fluid-curve),   
+                width 0.8s var(--fluid-curve),   
+                height 0.8s var(--fluid-curve),   
+                border-radius 0.8s var(--fluid-curve),   
+                opacity 0.5s ease;  
+}  
+
+/* Logic Animasi Mobile - SAMA PERSIS */
+.mobile-mode .notification-item.spawn {   
+    width: 40px;   
+    height: 40px;   
+    border-radius: 20px;   
+    opacity: 0;   
+    transform: translate(-50%, -120px) scale(0.3);   
+}  
+
+.mobile-mode .notification-item.active {   
+    width: 370px;   
+    max-width: 90vw;  
+    height: 78px;   
+    border-radius: 34px; /* Sedikit lebih bulat agar modern */
+    opacity: 1;   
+    transform: translate(-50%, 25px);   
+    z-index: 100;   
+}  
+
+.mobile-mode .notification-item.layer-1 {   
+    width: 330px;   
+    max-width: 85vw;  
+    height: 68px;   
+    border-radius: 30px;   
+    opacity: 0.6;   
+    transform: translate(-50%, 50px) scale(0.95);   
+    z-index: 90;   
+}  
+
+.mobile-mode .notification-item.layer-2 {   
+    width: 290px;   
+    max-width: 80vw;  
+    height: 58px;   
+    border-radius: 26px;   
+    opacity: 0.3;   
+    transform: translate(-50%, 70px) scale(0.9);   
+    z-index: 80;   
+}  
+
+.mobile-mode .notification-item.exit {   
+    transform: translate(-50%, -160px) scale(0);   
+    opacity: 0;   
+}  
+
+/* Progress Mobile - Horizontal - SAMA PERSIS */  
+.mobile-mode .progress-track {  
+    position: absolute;  
+    bottom: 0;  
+    left: 0;  
+    width: 100%;  
+    height: 3px;  
+    background: rgba(0,0,0,0.04);  
+    overflow: hidden;  
+}  
+
+.mobile-mode .progress-bar {   
+    height: 100%;   
+    width: 100%;   
+    transform-origin: left;  
+    transform: scaleX(1);  
+    filter: blur(0px); /* Clean look */
+}  
+
+/* ========================   
+   DESKTOP: PREMIUM GLASSMORPHISM
+   ======================== */  
+.desktop-mode .notification-item {  
+    position: absolute;  
+    right: 40px;  
+    bottom: 40px;  
+    width: 390px;  
+    max-width: 90vw;  
+    height: 145px;  
+    
+    /* Visual Upgrade: macOS Style Glass */
+    border-radius: 28px;  
+    background: var(--desktop-bg-light);  
+    
+    /* Border halus & Inner Highlight */
+    border: 1px solid var(--desktop-border-light);  
+    box-shadow: 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9), /* Efek pantulan cahaya atas */
+        0 20px 50px -12px rgba(0,0,0,0.15),      /* Shadow lembut luas */
+        0 8px 24px -6px rgba(0,0,0,0.08);        /* Shadow tajam dekat */
+        
+    color: var(--desktop-text-light);  
+    backdrop-filter: blur(40px) saturate(180%);  
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    
+    display: flex;  
+    align-items: center;  
+    pointer-events: auto;  
+    
+    /* Animasi Tetap Sama Persis */
+    transition: transform 0.7s cubic-bezier(0.25, 1.4, 0.35, 1), opacity 0.5s ease;  
+    
+    padding-right: 44px;  
+    padding-left: 6px;  
+}  
+
+.desktop-mode .notification-item.spawn {   
+    transform: translateX(120%);   
+    opacity: 0;   
+}  
+
+.desktop-mode .notification-item.active {   
+    transform: translateY(var(--y-offset));   
+    opacity: 1;   
+}  
+
+.desktop-mode .notification-item.exit {   
+    transform: translateX(120%) translateY(var(--y-offset));   
+    opacity: 0;   
+}  
+
+/* Progress Desktop - Vertical Liquid - PREMIUM */  
+.desktop-mode .progress-track {  
+    position: absolute;  
+    top: 30px;  
+    bottom: 30px;  
+    right: 18px;  
+    width: 10px; /* Sedikit lebih ramping */
+    height: auto;  
+    background: var(--desktop-track-light);  
+    
+    /* Inner shadow agar track terlihat cekung */
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.05); 
+    border-radius: 10px;  
+    overflow: hidden;  
+}  
+
+.desktop-mode .progress-bar {  
+    width: 100%;  
+    height: 100%;  
+    transform-origin: bottom;  
+    transform: scaleY(1);  
+    border-radius: 10px; /* Rounded ends for the bar */
+}  
+
+/* ========================   
+   UNIVERSAL CONTENT - VISUAL UPGRADE
+   ======================== */  
+.notification-icon {   
+    min-width: 70px;   
+    display: flex;   
+    justify-content: center;   
+}  
+
+.desktop-mode .notification-icon {  
+    min-width: 86px;  
+    padding-left: 10px;  
+}  
+
+/* Icon dengan efek 3D Gradient */
+.icon-blob {  
+    width: 54px;  
+    height: 54px;  
+    border-radius: 100px;  
+    display: flex;  
+    align-items: center;  
+    justify-content: center;  
+    color: white;  
+    
+    /* Shadow ikon agar timbul */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    font-size: 24px;
+}  
+
+.desktop-mode .icon-blob {  
+    width: 66px;  
+    height: 66px;  
+    border-radius: 22px;  
+    font-size: 28px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}  
+
+.notification-text {   
+    flex: 1;   
+    padding: 0 12px;   
+}  
+
+.desktop-mode .notification-text {  
+    padding-right: 28px;  
+}  
+
+/* Typography - Lebih Crisp */  
+.text-small {   
+    font-size: 11px;   
+    font-weight: 700;   
+    text-transform: uppercase;   
+    letter-spacing: 0.8px; /* Spacing lebih lebar dikit */
+    margin-bottom: 2px;   
+}  
+
+.desktop-mode .text-small {  
+    font-size: 13px;  
+    letter-spacing: 0.8px;  
+    margin-bottom: 5px;  
+}  
+
+.text-main {   
+    font-size: 15px;   
+    font-weight: 600;   
+    line-height: 1.35;   
+}  
+
+.desktop-mode .text-main {  
+    font-size: 19px; /* Sedikit dikecilkan agar elegan */
+    font-weight: 700;  
+    line-height: 1.4;  
+}  
+
+/* Mobile Colors */  
+.mobile-mode .text-small {   
+    color: rgba(0,0,0,0.55);   
+}  
+
+.mobile-mode .text-main {   
+    color: #1a1a1a;   
+}  
+
+.mobile-mode .notification-item:not(.active) .notification-text {   
+    opacity: 0;   
+}  
+
+/* Desktop Colors */  
+.desktop-mode .text-small {   
+    color: var(--desktop-subtext-light);   
+}  
+
+.desktop-mode .text-main {   
+    color: var(--desktop-text-light);   
+}  
+
+/* DESKTOP CONTENT ANIMATION - SAMA PERSIS */  
+.desktop-mode .stagger {  
+    opacity: 0;  
+    transform: translateY(12px);  
+    transition: 0.6s var(--fluid-curve);  
+}  
+
+.desktop-mode .notification-item.active .stagger:nth-child(1) {  
+    opacity: 1;  
+    transform: translateY(0);  
+    transition-delay: 0.1s;  
+}  
+
+.desktop-mode .notification-item.active .stagger:nth-child(2) {  
+    opacity: 1;  
+    transform: translateY(0);  
+    transition-delay: 0.2s;  
+}  
+
+/* ========================
+   THEMES - GRADIENT & GLOW UPGRADE
    ======================== */
-.mobile-mode .notification-item {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    background: var(--notif-light);
-    backdrop-filter: blur(40px) saturate(180%);
-    display: flex;
-    align-items: center;
-    pointer-events: auto;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-    transition: transform 0.8s var(--fluid-curve), 
-                width 0.8s var(--fluid-curve), 
-                height 0.8s var(--fluid-curve), 
-                border-radius 0.8s var(--fluid-curve), 
-                opacity 0.5s ease;
+   
+/* Success */  
+.success .icon-blob {   
+    background: linear-gradient(135deg, #34c759, #248a3d);   
+}  
+.desktop-mode .success .progress-bar {   
+    background: linear-gradient(to top, #34c759, #8affb1);   
+    box-shadow: 0 0 8px rgba(52, 199, 89, 0.4);
+}  
+.mobile-mode .success .progress-bar {   
+    background: #34c759;   
+}  
+  
+/* Error */  
+.error .icon-blob {   
+    background: linear-gradient(135deg, #ff3b30, #c0261d);   
+}  
+.desktop-mode .error .progress-bar {   
+    background: linear-gradient(to top, #ff3b30, #ff867f);   
+    box-shadow: 0 0 8px rgba(255, 59, 48, 0.4);
+}  
+.mobile-mode .error .progress-bar {   
+    background: #ff3b30;   
+}  
+  
+/* Warning */  
+.warning .icon-blob {   
+    background: linear-gradient(135deg, #ff9500, #c97600);   
+}  
+.desktop-mode .warning .progress-bar {   
+    background: linear-gradient(to top, #ff9500, #ffd07d);   
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
+}  
+.mobile-mode .warning .progress-bar {   
+    background: #ff9500;   
+}  
+  
+/* Info */  
+.info .icon-blob {   
+    background: linear-gradient(135deg, #007aff, #0056b3);   
+}  
+.desktop-mode .info .progress-bar {   
+    background: linear-gradient(to top, #007aff, #5ac8fa);   
+    box-shadow: 0 0 8px rgba(0, 122, 255, 0.4);
+}  
+.mobile-mode .info .progress-bar {   
+    background: #007aff;   
 }
 
-.mobile-mode .notification-item.spawn { 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 20px; 
-    opacity: 0; 
-    transform: translate(-50%, -120px) scale(0.3); 
-}
-
-.mobile-mode .notification-item.active { 
-    width: 370px; 
-    max-width: 90vw;
-    height: 78px; 
-    border-radius: 30px; 
-    opacity: 1; 
-    transform: translate(-50%, 25px); 
-    z-index: 100; 
-}
-
-.mobile-mode .notification-item.layer-1 { 
-    width: 330px; 
-    max-width: 85vw;
-    height: 68px; 
-    border-radius: 26px; 
-    opacity: 0.6; 
-    transform: translate(-50%, 50px) scale(0.95); 
-    z-index: 90; 
-}
-
-.mobile-mode .notification-item.layer-2 { 
-    width: 290px; 
-    max-width: 80vw;
-    height: 58px; 
-    border-radius: 22px; 
-    opacity: 0.3; 
-    transform: translate(-50%, 70px) scale(0.9); 
-    z-index: 80; 
-}
-
-.mobile-mode .notification-item.exit { 
-    transform: translate(-50%, -160px) scale(0); 
-    opacity: 0; 
-}
-
-/* Progress Mobile - Horizontal - SAMA PERSIS */
-.mobile-mode .progress-track {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: rgba(0,0,0,0.05);
-    overflow: hidden;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-}
-
-.mobile-mode .progress-bar { 
-    height: 100%; 
-    width: 100%; 
-    transform-origin: left;
-    transform: scaleX(1);
-    filter: blur(0.5px);
-}
-
-/* ======================== 
-   DESKTOP: DIPERBESAR (SKALA 1.3x) - SAMA PERSIS
-   ======================== */
-.desktop-mode .notification-item {
-    position: absolute;
-    right: 40px;
-    bottom: 40px;
-    width: 390px;
-    max-width: 90vw;
-    height: 145px;
-    border-radius: 28px;
-    background: var(--desktop-bg-light);
-    border: 1px solid var(--desktop-border-light);
-    color: var(--desktop-text-light);
-    backdrop-filter: blur(35px) saturate(150%);
-    display: flex;
-    align-items: center;
-    pointer-events: auto;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.1), 0 10px 25px rgba(0,0,0,0.06);
-    transition: transform 0.7s cubic-bezier(0.25, 1.4, 0.35, 1), opacity 0.5s ease;
-    padding-right: 44px;
-    padding-left: 6px;
-}
-
-.desktop-mode .notification-item.spawn { 
-    transform: translateX(120%); 
-    opacity: 0; 
-}
-
-.desktop-mode .notification-item.active { 
-    transform: translateY(var(--y-offset)); 
-    opacity: 1; 
-}
-
-.desktop-mode .notification-item.exit { 
-    transform: translateX(120%) translateY(var(--y-offset)); 
-    opacity: 0; 
-}
-
-/* Progress Desktop - Vertical Liquid - SAMA PERSIS */
-.desktop-mode .progress-track {
-    position: absolute;
-    top: 30px;
-    bottom: 30px;
-    right: 18px;
-    width: 12px;
-    height: auto;
-    background: var(--desktop-track-light);
-    border-radius: 7px;
-    overflow: hidden;
-}
-
-.desktop-mode .progress-bar {
-    width: 100%;
-    height: 100%;
-    transform-origin: bottom;
-    transform: scaleY(1);
-}
-
-/* ======================== 
-   UNIVERSAL CONTENT - SAMA PERSIS
-   ======================== */
-.notification-icon { 
-    min-width: 70px; 
-    display: flex; 
-    justify-content: center; 
-}
-
-.desktop-mode .notification-icon {
-    min-width: 80px;
-    padding-left: 8px;
-}
-
-.icon-blob {
-    width: 54px;
-    height: 54px;
-    border-radius: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-}
-
-.desktop-mode .icon-blob {
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-}
-
-.notification-text { 
-    flex: 1; 
-    padding: 0 12px; 
-}
-
-.desktop-mode .notification-text {
-    padding-right: 32px;
-}
-
-/* Typography - SAMA PERSIS */
-.text-small { 
-    font-size: 11px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    letter-spacing: 0.5px; 
-    margin-bottom: 2px; 
-}
-
-.desktop-mode .text-small {
-    font-size: 13px;
-    letter-spacing: 0.6px;
-    margin-bottom: 4px;
-}
-
-.text-main { 
-    font-size: 15px; 
-    font-weight: 600; 
-    line-height: 1.3; 
-}
-
-.desktop-mode .text-main {
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.4;
-}
-
-/* Mobile Colors - SAMA PERSIS */
-.mobile-mode .text-small { 
-    color: rgba(0,0,0,0.5); 
-}
-
-.mobile-mode .text-main { 
-    color: #000; 
-}
-
-.mobile-mode .notification-item:not(.active) .notification-text { 
-    opacity: 0; 
-}
-
-/* Desktop Colors - SAMA PERSIS */
-.desktop-mode .text-small { 
-    color: var(--desktop-subtext-light); 
-}
-
-.desktop-mode .text-main { 
-    color: var(--desktop-text-light); 
-}
-
-/* DESKTOP CONTENT ANIMATION - SAMA PERSIS */
-.desktop-mode .stagger {
-    opacity: 0;
-    transform: translateY(12px);
-    transition: 0.6s var(--fluid-curve);
-}
-
-.desktop-mode .notification-item.active .stagger:nth-child(1) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.1s;
-}
-
-.desktop-mode .notification-item.active .stagger:nth-child(2) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.2s;
-}
-
-/* THEMES - SAMA PERSIS */
-/* Success */
-.success .icon-blob { 
-    background: #34c759; 
-}
-
-.desktop-mode .success .progress-bar { 
-    background: linear-gradient(to top, rgba(52, 199, 89, 0.2), #34c759); 
-}
-
-.mobile-mode .success .progress-bar { 
-    background: #34c759; 
-}
-
-/* Error */
-.error .icon-blob { 
-    background: #ff3b30; 
-}
-
-.desktop-mode .error .progress-bar { 
-    background: linear-gradient(to top, rgba(255, 59, 48, 0.2), #ff3b30); 
-}
-
-.mobile-mode .error .progress-bar { 
-    background: #ff3b30; 
-}
-
-/* Warning */
-.warning .icon-blob { 
-    background: #ff9500; 
-}
-
-.desktop-mode .warning .progress-bar { 
-    background: linear-gradient(to top, rgba(255, 149, 0, 0.2), #ff9500); 
-}
-
-.mobile-mode .warning .progress-bar { 
-    background: #ff9500; 
-}
-
-/* Info */
-.info .icon-blob { 
-    background: #007aff; 
-}
-
-.desktop-mode .info .progress-bar { 
-    background: linear-gradient(to top, rgba(0, 122, 255, 0.2), #007aff); 
-}
-
-.mobile-mode .info .progress-bar { 
-    background: #007aff; 
-}
