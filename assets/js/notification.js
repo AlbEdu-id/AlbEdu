@@ -49,9 +49,9 @@ class NotificationSystem {
             this.container.className = 'notification-container';    
                 
             // --- TAMBAHKAN BARIS INI ---    
-// Memastikan notifikasi selalu di atas segalanya (termasuk Modal/Panel)    
-this.container.style.zIndex = '999999';    
-// ---------------------------    
+            // Memastikan notifikasi selalu di atas segalanya (termasuk Modal/Panel)    
+            this.container.style.zIndex = '999999';    
+            // ---------------------------    
                 
             // Add to body    
             document.body.appendChild(this.container);    
@@ -225,20 +225,20 @@ this.container.style.zIndex = '999999';
         `;    
             
         const notification = {
-    id,
-    element,
-    isDead: false,
-    duration,
-    isDesktop,
-    type: finalType,
-    createdAt: Date.now(),
-    timer: null,
-    dismissible,
-    pausedProgress: null,
+            id,
+            element,
+            isDead: false,
+            duration,
+            isDesktop,
+            type: finalType,
+            createdAt: Date.now(),
+            timer: null,
+            dismissible,
+            pausedProgress: null,
 
-    // FIX: flag animasi spawn
-    hasSpawned: false
-};    
+            // FIX: flag animasi spawn
+            hasSpawned: false
+        };    
             
         // Store    
         this.notifications.set(id, notification);    
@@ -246,42 +246,42 @@ this.container.style.zIndex = '999999';
         // Add to container    
         this.container.appendChild(element);    
             
-// Animate in
-requestAnimationFrame(() => {
-    setTimeout(() => {
-        
-        // FIX: spawn hanya 1x
-        if (!notification.hasSpawned) {
-            element.classList.add('spawn');
-            
-            requestAnimationFrame(() => {
-                element.classList.add('active');
-                notification.hasSpawned = true;
+        // Animate in
+        requestAnimationFrame(() => {
+            setTimeout(() => {
                 
-                this.refreshUI();
-                
-                // Start progress bar (FIXED MOBILE)
-                const progressBar = element.querySelector(`#progress-${id}`);
-                if (progressBar && duration > 0) {
-                    if (isDesktop) {
-                        progressBar.style.transition = `transform ${duration}ms linear`;
-                        progressBar.style.transform = "scaleY(1)";
-                        requestAnimationFrame(() => {
-                            progressBar.style.transform = "scaleY(0)";
-                        });
-                    } else {
-                        progressBar.style.transition = `width ${duration}ms linear`;
-                        progressBar.style.width = "100%";
-                        requestAnimationFrame(() => {
-                            progressBar.style.width = "0%";
-                        });
-                    }
+                // FIX: spawn hanya 1x
+                if (!notification.hasSpawned) {
+                    element.classList.add('spawn');
+                    
+                    requestAnimationFrame(() => {
+                        element.classList.add('active');
+                        notification.hasSpawned = true;
+                        
+                        this.refreshUI();
+                        
+                        // Start progress bar (FIXED MOBILE)
+                        const progressBar = element.querySelector(`#progress-${id}`);
+                        if (progressBar && duration > 0) {
+                            if (isDesktop) {
+                                progressBar.style.transition = `transform ${duration}ms linear`;
+                                progressBar.style.transform = "scaleY(1)";
+                                requestAnimationFrame(() => {
+                                    progressBar.style.transform = "scaleY(0)";
+                                });
+                            } else {
+                                progressBar.style.transition = `width ${duration}ms linear`;
+                                progressBar.style.width = "100%";
+                                requestAnimationFrame(() => {
+                                    progressBar.style.width = "0%";
+                                });
+                            }
+                        }
+                    });
                 }
-            });
-        }
-        
-    }, 40);
-});    
+                
+            }, 40);
+        });    
             
         // Auto dismiss    
         if (duration > 0) {    
@@ -298,12 +298,12 @@ requestAnimationFrame(() => {
         }    
             
         // FIX: jangan bunuh animasi mobile
-if (isDesktop) {
-    this.cleanup(true);
-} else {
-    // kasih waktu animasi mobile selesai dulu
-    setTimeout(() => this.cleanup(false), 350);
-}
+        if (isDesktop) {
+            this.cleanup(true);
+        } else {
+            // kasih waktu animasi mobile selesai dulu
+            setTimeout(() => this.cleanup(false), 350);
+        }
             
         return id;    
     }    
@@ -563,6 +563,8 @@ function setupGlobal() {
         addType: (t, c) => Notifications.addType(t, c)    
     };    
         
-    console.log('🔔 Notification System Ready');    
-}  
- 
+    console.log('🔔 Notification System Ready');
+    
+    // PATCH: Dispatch event agar UI tau kapan notif siap
+    window.dispatchEvent(new Event('notification:ready'));
+}
