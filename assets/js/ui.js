@@ -1176,19 +1176,15 @@ function initializeUISystem() {
     console.log(`🚀 Initializing UI System v${UI_CONFIG.version}...`);
     try {
         injectProfileCSS();
-        const notificationManager = window.Notifications || window.notify;
-        if (notificationManager) {
-            console.log('🔗 UI System linked to notification.js');
-            window.UI.Notification = notificationManager;
-        } else {
-            console.warn('⚠️ notification.js not found.');
-            window.UI.Notification = {
-                success: (t,m,d) => console.log(`[Mock Notif] Success: ${t} - ${m}`),
-                error: (t,m,d) => console.error(`[Mock Notif] Error: ${t} - ${m}`),
-                warning: (t,m,d) => console.warn(`[Mock Notif] Warning: ${t} - ${m}`),
-                info: (t,m,d) => console.log(`[Mock Notif] Info: ${t} - ${m}`)
-            };
-        }
+        
+        // PATCH 2: UI menunggu NotificationSystem siap
+        window.addEventListener('notification:ready', () => {
+            if (window.Notifications) {
+                console.log('🔗 UI linked to NotificationSystem (READY)');
+                window.UI.Notification = window.Notifications;
+            }
+        });
+
         const modalSystem = new ModalSystem();
         const toastSystem = new ToastSystem();
         window.UI.Modal = modalSystem;
@@ -1215,6 +1211,15 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initializeUISystem, 100);
 }
+
+// PATCH 3: Anti-reference basi
+// FIX: pastikan window.notify selalu pakai instance terbaru
+Object.defineProperty(window, 'notify', {
+    configurable: true,
+    get() {
+        return window.Notifications || {};
+    }
+});
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { UI: window.UI, Modal: window.UI.Modal, Toast: window.UI.Toast };
