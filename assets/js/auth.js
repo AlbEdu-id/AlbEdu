@@ -9,17 +9,6 @@ let userProfileState = null;
 let profileListener = null;
 let isSystemInitialized = false;
 
-function showNotification(type, title, message, duration) {
-    if (window.HyperOS && window.HyperOS.Notifications) {
-        return window.HyperOS.Notifications[type](title, message, duration);
-    }
-    if (window.notify && window.notify[type]) {
-        return window.notify[type](title, message, duration);
-    }
-    console[type === 'error' ? 'error' : 'log'](`[${type.toUpperCase()}] ${title}: ${message}`);
-    return null;
-}
-
 function generateDefaultAvatar(seed) {
     const defaultSeed = seed || 'user' + Date.now();
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultSeed)}&backgroundColor=6b7280`;
@@ -63,16 +52,9 @@ async function fetchUserData(userId) {
                 if (snap.exists) {
                     const data = snap.data();
                     
-                    // Production Safety: Sanitasi data (Jangan melakukan update di sini)
-                    // Kita hanya menyiapkan data lokal untuk digunakan UI
                     if (!data.nama) data.nama = '';
                     if (!data.foto_profil) data.foto_profil = generateDefaultAvatar(data.email || userId);
                     if (!data.peran) data.peran = 'siswa';
-                    
-                    // PERUBAHAN LOGIKA: 
-                    // HAPUS blok if (data.profilLengkap !== calculatedComplete) yang melakukan .update()
-                    // Kita PERCAYAI Firestore Rules yang sudah menangani validasi tersebut.
-                    // Infinite Loop terjadi karena JS melakukan update yang memicu listener ini.
                     
                     userData = data;
                     userRole = userData.peran || 'siswa';
@@ -89,7 +71,6 @@ async function fetchUserData(userId) {
                         };
                     }
                     
-                    // Update state lokal
                     userProfileState.isProfileComplete = userData.profilLengkap;
 
                     if (!resolved) {
@@ -97,7 +78,6 @@ async function fetchUserData(userId) {
                         resolve(userData);
                     }
 
-                    // Update UI jika ada
                     if (currentUser && window.UI) {
                         window.UI.updateProfileButton();
                         if (document.getElementById('profilePanel')) {
@@ -110,7 +90,6 @@ async function fetchUserData(userId) {
 
                 } else {
                     console.log('📝 Data user belum ada, membuat data baru...');
-                    showNotification('info', 'Info', 'Membuat profil baru...', 3000);
                     const newData = await createUserData(userId);
                     if (!resolved) {
                         resolved = true;
@@ -119,12 +98,10 @@ async function fetchUserData(userId) {
                 }
             } catch (error) {
                 console.error('Error in user data listener:', error);
-                showNotification('error', 'Kesalahan Data', 'Gagal memuat data pengguna', 5000);
                 if (!resolved) reject(error);
             }
         }, (error) => {
             console.error('Firestore listener error:', error);
-            showNotification('error', 'Koneksi Gagal', 'Gagal terhubung ke database', 5000);
             if (!resolved) reject(error);
         });
     });
@@ -146,7 +123,6 @@ async function createUserData(userId) {
     };
 
     await firebaseDb.collection('users').doc(userId).set(payload);
-    showNotification('success', 'Profil Baru', 'Profil berhasil dibuat', 4000);
     return payload;
 }
 
@@ -162,7 +138,6 @@ async function authLogin() {
         const result = await firebaseAuth.signInWithPopup(provider);
 
         console.log('✅ Login sukses:', result.user.email);
-        showNotification('success', 'Login Berhasil', `Selamat datang, ${result.user.displayName || result.user.email}`, 4000);
         
         if (window.UI) window.UI.showAuthLoading('Login berhasil, menyiapkan sistem…');
 
@@ -177,7 +152,6 @@ async function authLogin() {
             errorMsg = 'Popup login diblokir oleh browser. Silakan izinkan popup.';
         }
 
-        showNotification('error', 'Login Gagal', errorMsg, 5000);
         if (window.UI) window.UI.hideAuthLoading();
         throw new Error(errorMsg);
     }
@@ -194,7 +168,6 @@ async function authLogout() {
 
         await firebaseAuth.signOut();
         console.log('✅ Logout berhasil');
-        showNotification('info', 'Logout Berhasil', 'Anda telah keluar dari sistem', 3000);
 
         const profileContainer = document.querySelector('.profile-button-container');
         if (profileContainer) profileContainer.remove();
@@ -211,7 +184,6 @@ async function authLogout() {
         if (window.ByteWard) window.ByteWard.redirectAfterLogout();
     } catch (error) {
         console.error('❌ Error logout:', error);
-        showNotification('error', 'Logout Gagal', 'Gagal melakukan logout', 5000);
         if (window.UI) window.UI.showError('Gagal logout.');
     }
 }
@@ -227,7 +199,6 @@ async function initializeSystem() {
 
     if (typeof firebase === 'undefined' || !firebase.auth) {
         console.error('❌ Firebase tidak tersedia');
-        showNotification('error', 'Firebase Error', 'Firebase belum dimuat. Silakan refresh halaman.', 5000);
         if (window.UI) window.UI.hideAuthLoading();
         return;
     }
@@ -282,9 +253,6 @@ async function initializeSystem() {
             });
 
             if (window.UI) window.UI.hideAuthLoading();
-            let errorMsg = 'Terjadi kesalahan sistem autentikasi';
-            if (err.message) errorMsg += ': ' + err.message;
-            showNotification('error', 'Auth Error', errorMsg, 5000);
         } finally {
             if (window.UI) window.UI.hideAuthLoading();
         }
@@ -307,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof firebaseAuth === 'undefined') {
             console.error('❌ Firebase belum siap');
-            showNotification('error', 'Firebase Error', 'Firebase tidak tersedia', 5000);
             return;
         }
         initializeSystem();
@@ -323,8 +290,7 @@ window.Auth = {
     debugByteWard,
     checkProfileCompleteness,
     generateDefaultAvatar,
-    PROFILE_AVATARS,
-    showNotification
+    PROFILE_AVATARS
 };
 
 Object.defineProperties(window.Auth, {
