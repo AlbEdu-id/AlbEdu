@@ -1,42 +1,93 @@
-// ByteWard UI Module v2.0 - Production Ready with Advanced Profile System
-console.log('🚀 Memuat UI Module v2.0 - Sistem Profil 3 Mode dengan Animasi Halus');
+// ByteWard UI Module v2.0 - Production Ready with Full Auth Integration
+console.log('🚀 Memuat UI Module v2.0 - Production Ready dengan Sistem Profil 3 Mode');
+
+// =======================
+// BACKWARD COMPATIBILITY LAYER - WAJIB ADA
+// =======================
+(function() {
+    // Cegah overwrite total window.UI
+    if (!window.UI) window.UI = {};
+    
+    // Simpan fungsi lama jika ada
+    const oldUI = { ...window.UI };
+    
+    // API contract yang diharapkan oleh auth.js lama
+    const compatibilityAPI = {
+        showAuthLoading: function() {
+            // Stub function - tidak error saat dipanggil auth lama
+            console.log('[UI v2] showAuthLoading() - compatibility stub');
+            return true;
+        },
+        
+        hideAuthLoading: function() {
+            // Stub function - tidak error saat dipanggil auth lama
+            console.log('[UI v2] hideAuthLoading() - compatibility stub');
+            return true;
+        },
+        
+        showStatus: function(message, type = 'success') {
+            // Implementasi real untuk showStatus
+            if (window.ByteWardUI && window.ByteWardUI.showStatus) {
+                return window.ByteWardUI.showStatus(message, type);
+            }
+            console.log(`[UI v2] Status: ${message} (${type})`);
+            return true;
+        },
+        
+        saveProfile: function() {
+            // Implementasi real untuk saveProfile
+            if (window.ByteWardUI && window.ByteWardUI.saveProfile) {
+                return window.ByteWardUI.saveProfile();
+            }
+            console.log('[UI v2] saveProfile() called');
+            return Promise.resolve();
+        },
+        
+        confirmAndLogout: function() {
+            // Tampilkan logout modal
+            const modal = document.getElementById('logoutModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    modal.classList.add('active');
+                }, 10);
+                return true;
+            }
+            console.log('[UI v2] confirmAndLogout() - modal not found');
+            return false;
+        }
+    };
+    
+    // Merge dengan fungsi lama (jika ada)
+    Object.assign(window.UI, compatibilityAPI, oldUI);
+})();
 
 // =======================
 // CONFIGURATION
 // =======================
 const UI_CONFIG = {
     version: '2.0.0',
+    isProduction: true,
+    authIntegration: true,
     features: {
         profileSystem: true,
-        notificationSystem: false,
         loadingSystem: true,
-        errorSystem: true,
-        modalSystem: true,
-        toastSystem: true,
-        logoutSystem: true,
-        advancedAnimations: true,
-        profileModes: ['view', 'edit', 'editAvatar']
+        authCompatible: true
     },
     defaults: {
         animationSpeed: 300,
         transitionDuration: 250,
-        theme: 'light',
         avatarCount: 20,
         maxFileSize: 5 * 1024 * 1024 // 5MB
-    },
-    selectors: {
-        profileButton: '#profileTrigger',
-        profileOverlay: '#profileOverlay',
-        profilePanel: '#profilePanel',
-        logoutModal: '#logoutModal'
     }
 };
 
 // =======================
-// STATE MANAGEMENT (Identik dengan Prototype)
+// STATE MANAGEMENT (HANYA UNTUK UI STATE)
 // =======================
 const UIState = {
-    mode: 'view', // 'view', 'edit', 'editAvatar'
+    mode: 'view',
     tempName: '',
     selectedAvatar: null,
     customAvatar: null,
@@ -48,7 +99,7 @@ const UIState = {
 };
 
 // =======================
-// AVATAR MANAGEMENT
+// AVATAR MANAGEMENT (PRODUCTION READY)
 // =======================
 const AvatarSystem = {
     generateAvatars(count = 20) {
@@ -87,7 +138,7 @@ const AvatarSystem = {
 };
 
 // =======================
-// TRANSITION SYSTEM (Identik dengan Prototype)
+// TRANSITION SYSTEM
 // =======================
 const TransitionManager = {
     async transitionTo(newMode, callback) {
@@ -143,9 +194,71 @@ const TransitionManager = {
 };
 
 // =======================
-// PROFILE BUTTON SYSTEM
+// AUTH INTEGRATION HELPER
+// =======================
+const AuthIntegration = {
+    // Validasi auth system tersedia
+    validateAuth() {
+        if (!window.Auth) {
+            console.error('Auth system not found');
+            return false;
+        }
+        
+        if (!window.Auth.currentUser) {
+            console.warn('No user logged in');
+            return false;
+        }
+        
+        if (!window.Auth.userData) {
+            console.warn('User data not loaded');
+            return false;
+        }
+        
+        return true;
+    },
+    
+    // Get user data dengan fallback
+    getUserData() {
+        return window.Auth?.userData || {};
+    },
+    
+    // Get current user dengan fallback
+    getCurrentUser() {
+        return window.Auth?.currentUser || null;
+    },
+    
+    // Update user data di auth system
+    async updateUserData(updates) {
+        if (!window.Auth) return false;
+        
+        try {
+            // Update Firestore
+            const userId = window.Auth.currentUser?.uid;
+            if (!userId) return false;
+            
+            await firebase.firestore().collection('users').doc(userId).update(updates);
+            
+            // Update local auth data
+            window.Auth.userData = { ...window.Auth.userData, ...updates };
+            
+            // Trigger update event jika ada
+            if (window.Auth.setUserData) {
+                window.Auth.setUserData(window.Auth.userData);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to update user data:', error);
+            return false;
+        }
+    }
+};
+
+// =======================
+// PROFILE BUTTON SYSTEM (AUTH INTEGRATED)
 // =======================
 function createProfileButton() {
+    // Hapus existing
     const existing = document.querySelector('.profile-button-container');
     if (existing) existing.remove();
 
@@ -186,8 +299,9 @@ function createProfileButton() {
         button.style.boxShadow = '0 8px 32px rgba(99, 102, 241, 0.4)';
     });
 
-    const avatarUrl = (window.Auth?.userData?.foto_profil) || 
-                     AvatarSystem.getDefaultAvatar(window.Auth?.currentUser?.email || 'user');
+    // Get avatar dari auth data
+    const userData = AuthIntegration.getUserData();
+    const avatarUrl = userData.foto_profil || AvatarSystem.getDefaultAvatar(userData.email || 'user');
     
     const img = document.createElement('img');
     img.src = avatarUrl;
@@ -208,8 +322,8 @@ function createProfileButton() {
     
     button.appendChild(img);
 
-    // Profile Indicator (Identik dengan Prototype)
-    if (window.Auth?.userData && !window.Auth.userData.profilLengkap) {
+    // Profile indicator - berdasarkan profilLengkap dari auth
+    if (userData && !userData.profilLengkap) {
         const indicator = document.createElement('div');
         indicator.className = 'profile-indicator';
         indicator.setAttribute('aria-hidden', 'true');
@@ -245,21 +359,23 @@ function updateProfileButton() {
     const button = document.getElementById('profileTrigger');
     if (!button) return;
 
+    const userData = AuthIntegration.getUserData();
     const img = button.querySelector('.profile-image');
-    if (img && window.Auth?.userData?.foto_profil) {
+    
+    if (img && userData.foto_profil) {
         const oldSrc = img.src;
-        img.src = window.Auth.userData.foto_profil;
+        img.src = userData.foto_profil;
         img.onerror = function() {
             if (this.src !== oldSrc) {
-                this.src = AvatarSystem.getDefaultAvatar(window.Auth?.currentUser?.email || 'user');
+                this.src = AvatarSystem.getDefaultAvatar(userData.email || 'user');
             }
         };
     }
 
     const indicator = button.querySelector('.profile-indicator');
-    if (window.Auth?.userData?.profilLengkap) {
+    if (userData.profilLengkap) {
         if (indicator) indicator.remove();
-    } else if (!indicator && button.querySelector('.profile-image')) {
+    } else if (!indicator && userData) {
         const newIndicator = document.createElement('div');
         newIndicator.className = 'profile-indicator';
         newIndicator.setAttribute('aria-hidden', 'true');
@@ -298,7 +414,7 @@ function createProfilePanel() {
     const existingModal = document.getElementById('logoutModal');
     if (existingModal) existingModal.remove();
 
-    // Create overlay (Identik dengan Prototype)
+    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'profile-overlay';
     overlay.id = 'profileOverlay';
@@ -319,7 +435,7 @@ function createProfilePanel() {
         transition: opacity 0.3s ease;
     `;
 
-    // Create panel (Identik dengan Prototype)
+    // Create panel
     const panel = document.createElement('div');
     panel.className = 'profile-panel';
     panel.id = 'profilePanel';
@@ -343,7 +459,7 @@ function createProfilePanel() {
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
-    // Create logout modal (Identik dengan Prototype)
+    // Create logout modal
     createLogoutModal();
 }
 
@@ -397,80 +513,10 @@ function createLogoutModal() {
 
     modalOverlay.appendChild(modal);
     document.body.appendChild(modalOverlay);
-
-    // Style modal elements
-    const style = document.createElement('style');
-    style.textContent = `
-        .modal h3 {
-            font-size: clamp(18px, 2vw, 22px);
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #1f2937;
-            line-height: 1.3;
-        }
-        
-        .modal p {
-            color: #6b7280;
-            margin-bottom: 32px;
-            line-height: 1.6;
-            font-size: 15px;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 16px;
-            justify-content: flex-end;
-        }
-        
-        .modal-btn {
-            padding: 14px 24px;
-            border-radius: 16px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: inherit;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 48px;
-        }
-        
-        .modal-btn-cancel {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-        
-        .modal-btn-cancel:hover {
-            background: #e5e7eb;
-            transform: translateY(-2px);
-        }
-        
-        .modal-btn-confirm {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-        }
-        
-        .modal-btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-        }
-        
-        @media (max-width: 480px) {
-            .modal-actions {
-                flex-direction: column;
-                gap: 12px;
-            }
-        }
-    `;
-    document.head.appendChild(style);
 }
 
 // =======================
-// RENDER FUNCTIONS (Identik dengan Prototype)
+// RENDER FUNCTIONS
 // =======================
 function renderProfilePanel() {
     const panel = document.getElementById('profilePanel');
@@ -478,7 +524,6 @@ function renderProfilePanel() {
 
     let content = '';
     
-    // Jika sedang loading, tampilkan skeleton (Identik dengan Prototype)
     if (UIState.isLoading && UIState.mode === 'view') {
         content = renderSkeleton();
     } else {
@@ -542,7 +587,7 @@ function renderSkeleton() {
 }
 
 function renderViewMode() {
-    const user = window.Auth?.userData || {};
+    const user = AuthIntegration.getUserData();
     const avatarUrl = user.foto_profil || AvatarSystem.getDefaultAvatar(user.email || 'user');
     
     return `
@@ -579,7 +624,7 @@ function renderViewMode() {
 }
 
 function renderEditMode() {
-    const user = window.Auth?.userData || {};
+    const user = AuthIntegration.getUserData();
     const avatarUrl = user.foto_profil || AvatarSystem.getDefaultAvatar(user.email || 'user');
     const hasChanges = UIState.hasChanges;
     
@@ -687,11 +732,13 @@ function bindPanelEvents() {
 
     // Overlay click
     const overlay = document.getElementById('profileOverlay');
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            hideProfilePanel();
-        }
-    });
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                hideProfilePanel();
+            }
+        });
+    }
 
     // Mode-specific events
     switch (UIState.mode) {
@@ -714,7 +761,7 @@ function bindViewModeEvents() {
         editBtn.addEventListener('click', async () => {
             await TransitionManager.transitionTo('edit', () => {
                 UIState.mode = 'edit';
-                UIState.tempName = window.Auth?.userData?.nama || '';
+                UIState.tempName = AuthIntegration.getUserData().nama || '';
                 renderProfilePanel();
             });
         });
@@ -731,18 +778,19 @@ function bindEditModeEvents() {
     // Name input
     const nameInput = document.getElementById('editName');
     if (nameInput) {
-        nameInput.value = window.Auth?.userData?.nama || '';
+        const userData = AuthIntegration.getUserData();
+        nameInput.value = userData.nama || '';
         
         nameInput.addEventListener('input', (e) => {
             UIState.tempName = e.target.value;
             UIState.hasChanges = 
-                UIState.tempName !== (window.Auth?.userData?.nama || '') ||
+                UIState.tempName !== (userData.nama || '') ||
                 UIState.selectedAvatar !== null ||
                 UIState.customAvatar !== null;
             updateSaveButton();
         });
         
-        // Auto-focus input nama (Identik dengan Prototype)
+        // Auto-focus input nama
         setTimeout(() => nameInput.focus(), 50);
     }
 
@@ -780,7 +828,7 @@ function bindEditModeEvents() {
 }
 
 function bindEditAvatarModeEvents() {
-    // Avatar selection dengan micro-interaction (Identik dengan Prototype)
+    // Avatar selection dengan micro-interaction
     const avatarItems = document.querySelectorAll('.avatar-item');
     avatarItems.forEach(item => {
         item.addEventListener('click', (e) => {
@@ -826,7 +874,7 @@ function bindEditAvatarModeEvents() {
         }
     }
 
-    // Back button dengan transisi (Identik dengan Prototype)
+    // Back button dengan transisi
     const backBtn = document.getElementById('backToEditBtn');
     if (backBtn) {
         backBtn.addEventListener('click', async () => {
@@ -884,7 +932,7 @@ function handleAvatarUpload(event) {
         // Show preview
         showStatus('Avatar custom berhasil diunggah!', 'success');
         
-        // Render preview immediately (Identik dengan Prototype)
+        // Render preview immediately
         const previewContainer = document.createElement('div');
         previewContainer.id = 'customAvatarPreviewContainer';
         previewContainer.className = 'custom-avatar-preview active';
@@ -930,13 +978,13 @@ function updateSaveButton() {
 }
 
 async function saveProfile() {
-    if (!UIState.hasChanges || UIState.isLoading) return;
-
-    // Validate required data
-    if (!window.Auth || !window.Auth.currentUser || !window.Auth.userData) {
-        showStatus('Sistem auth tidak tersedia', 'error');
+    // Validasi auth system
+    if (!AuthIntegration.validateAuth()) {
+        showStatus('Sistem auth tidak siap. Silakan login ulang.', 'error');
         return;
     }
+
+    if (!UIState.hasChanges || UIState.isLoading) return;
 
     // Check online status
     if (!navigator.onLine) {
@@ -945,15 +993,15 @@ async function saveProfile() {
     }
 
     try {
-        // Start loading - tampilkan skeleton di view mode
+        // Start loading
         UIState.isLoading = true;
-        UIState.mode = 'view';
-        renderProfilePanel();
+        updateSaveButton();
 
+        const userData = AuthIntegration.getUserData();
         const updates = {};
         
         // Update name if changed
-        if (UIState.tempName !== undefined && UIState.tempName !== window.Auth.userData.nama) {
+        if (UIState.tempName !== undefined && UIState.tempName !== userData.nama) {
             const cleanName = UIState.tempName.trim();
             if (cleanName.length > 0) {
                 updates.nama = cleanName;
@@ -963,7 +1011,7 @@ async function saveProfile() {
         }
 
         // Update avatar
-        let newAvatarUrl = window.Auth.userData.foto_profil;
+        let newAvatarUrl = userData.foto_profil;
         if (UIState.customAvatar) {
             newAvatarUrl = UIState.customAvatar;
         } else if (UIState.selectedAvatar) {
@@ -971,13 +1019,13 @@ async function saveProfile() {
             newAvatarUrl = selected?.url || '';
         }
 
-        if (newAvatarUrl && newAvatarUrl !== window.Auth.userData.foto_profil) {
+        if (newAvatarUrl && newAvatarUrl !== userData.foto_profil) {
             updates.foto_profil = newAvatarUrl;
         }
 
         // Determine if profile is complete
-        const finalName = updates.nama || window.Auth.userData.nama || '';
-        const finalAvatar = updates.foto_profil || window.Auth.userData.foto_profil || '';
+        const finalName = updates.nama || userData.nama || '';
+        const finalAvatar = updates.foto_profil || userData.foto_profil || '';
         
         const isNameValid = typeof finalName === 'string' && finalName.trim().length > 0;
         const isAvatarValid = typeof finalAvatar === 'string' && finalAvatar.trim().length > 0;
@@ -991,29 +1039,29 @@ async function saveProfile() {
         delete updates.id;
         delete updates.createdAt;
 
-        // Update Firestore
-        await firebase.firestore().collection('users').doc(window.Auth.currentUser.uid).update(updates);
-
-        // Update local Auth state
-        window.Auth.userData = { ...window.Auth.userData, ...updates };
+        // Update Firestore dan Auth
+        const success = await AuthIntegration.updateUserData(updates);
         
-        // Update UI state
+        if (!success) {
+            throw new Error('Gagal menyimpan ke database');
+        }
+
+        // Reset UI state
         UIState.hasChanges = false;
         UIState.selectedAvatar = null;
         UIState.customAvatar = null;
         UIState.customAvatarPreview = null;
         UIState.isLoading = false;
 
-        // Update UI components
+        // Update UI
         updateProfileButton();
-        
-        // Render updated view mode
+        UIState.mode = 'view';
         renderProfilePanel();
 
         // Tampilkan success message
         showStatus('Profil berhasil disimpan!', 'success');
         
-        // Auto close jika profil lengkap (Identik dengan Prototype)
+        // Auto close jika profil lengkap
         if (updates.profilLengkap && !UIState.autoCloseTriggered) {
             UIState.autoCloseTriggered = true;
             setTimeout(() => {
@@ -1025,6 +1073,9 @@ async function saveProfile() {
     } catch (error) {
         console.error('Save profile error:', error);
         
+        UIState.isLoading = false;
+        updateSaveButton();
+        
         let userMessage = 'Gagal menyimpan profil.';
         if (error.code === 'permission-denied') {
             userMessage = 'Anda tidak memiliki izin untuk mengubah data ini.';
@@ -1033,10 +1084,6 @@ async function saveProfile() {
         }
         
         showStatus(userMessage, 'error');
-        
-        // Reset loading state
-        UIState.isLoading = false;
-        renderProfilePanel();
     }
 }
 
@@ -1077,30 +1124,51 @@ function showStatus(message, type = 'success') {
 }
 
 // =======================
-// LOGOUT SYSTEM (Identik dengan Prototype)
+// LOGOUT SYSTEM
 // =======================
 function showLogoutModal() {
     const modal = document.getElementById('logoutModal');
-    modal.classList.add('active');
+    if (!modal) return;
 
-    // Focus trap untuk modal
+    modal.style.display = 'flex';
     setTimeout(() => {
-        document.getElementById('cancelLogout').focus();
-    }, 100);
+        modal.style.opacity = '1';
+        modal.classList.add('active');
+    }, 10);
 
     // Bind modal events
-    document.getElementById('cancelLogout').addEventListener('click', () => {
-        modal.classList.remove('active');
-    });
-
-    document.getElementById('confirmLogout').addEventListener('click', () => {
-        performLogout();
-    });
+    const cancelBtn = document.getElementById('cancelLogout');
+    const confirmBtn = document.getElementById('confirmLogout');
+    
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            modal.classList.remove('active');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        };
+    }
+    
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            modal.classList.remove('active');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                performLogout();
+            }, 300);
+        };
+    }
 
     // Escape key untuk close modal
     const handleEscKey = (e) => {
         if (e.key === 'Escape' && modal.classList.contains('active')) {
             modal.classList.remove('active');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
             document.removeEventListener('keydown', handleEscKey);
         }
     };
@@ -1108,12 +1176,6 @@ function showLogoutModal() {
 }
 
 async function performLogout() {
-    const modal = document.getElementById('logoutModal');
-    modal.classList.remove('active');
-    
-    // Simulate logout process
-    showStatus('Sedang logout...', 'success');
-    
     try {
         // Tutup panel profil
         hideProfilePanel();
@@ -1130,7 +1192,7 @@ async function performLogout() {
             // Redirect ke halaman login
             setTimeout(() => {
                 window.location.href = '/login.html';
-            }, 1500);
+            }, 1000);
             
         } else if (window.firebaseAuth) {
             // Fallback ke Firebase auth langsung
@@ -1142,7 +1204,7 @@ async function performLogout() {
             
             setTimeout(() => {
                 window.location.reload();
-            }, 1500);
+            }, 1000);
         } else {
             throw new Error('Auth system tidak ditemukan');
         }
@@ -1167,13 +1229,17 @@ function showProfilePanel() {
     renderProfilePanel();
     
     const overlay = document.getElementById('profileOverlay');
-    overlay.classList.add('active');
+    if (!overlay) return;
     
-    // Animasi masuk (Identik dengan Prototype)
+    overlay.style.display = 'flex';
     setTimeout(() => {
+        overlay.classList.add('active');
+        
         const panel = document.getElementById('profilePanel');
-        panel.style.transform = 'translateY(0) scale(1)';
-        panel.style.opacity = '1';
+        if (panel) {
+            panel.style.transform = 'translateY(0) scale(1)';
+            panel.style.opacity = '1';
+        }
     }, 10);
     
     // Focus trap untuk aksesibilitas
@@ -1193,9 +1259,10 @@ function hideProfilePanel() {
     }
     
     if (overlay) {
+        overlay.classList.remove('active');
         overlay.style.opacity = '0';
         setTimeout(() => {
-            overlay.classList.remove('active');
+            overlay.style.display = 'none';
             overlay.style.opacity = '1';
             
             // Reset file inputs
@@ -1228,6 +1295,10 @@ function initKeyboardNavigation() {
             
             if (modal && modal.classList.contains('active')) {
                 modal.classList.remove('active');
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
                 e.preventDefault();
             } else if (overlay && overlay.classList.contains('active')) {
                 hideProfilePanel();
@@ -1253,7 +1324,7 @@ function initKeyboardNavigation() {
 }
 
 // =======================
-// CSS INJECTION (Identik dengan Prototype)
+// CSS INJECTION
 // =======================
 function injectProfileCSS() {
     if (document.querySelector('#profile-css')) return;
@@ -1277,7 +1348,6 @@ function injectProfileCSS() {
             }
         }
 
-        /* Transisi antar mode - reusable */
         .mode-transition-enter {
             animation: modeFadeIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
@@ -1666,7 +1736,6 @@ function injectProfileCSS() {
             padding: 8px;
         }
 
-        /* Layout mobile avatar grid */
         @media (max-width: 768px) {
             .avatar-grid {
                 grid-template-columns: repeat(4, 1fr);
@@ -1933,6 +2002,72 @@ function injectProfileCSS() {
             background: #a1a1a1;
         }
 
+        /* ==================== MODAL STYLES ==================== */
+        .modal h3 {
+            font-size: clamp(18px, 2vw, 22px);
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1f2937;
+            line-height: 1.3;
+        }
+        
+        .modal p {
+            color: #6b7280;
+            margin-bottom: 32px;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 14px 24px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+        }
+        
+        .modal-btn-cancel {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+        
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .modal-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+
         /* ==================== Hover state untuk desktop avatar grid ==================== */
         @media (hover: hover) and (min-width: 769px) {
             .avatar-item:hover:not(.selected) {
@@ -1948,7 +2083,7 @@ function injectProfileCSS() {
 // INITIALIZATION
 // =======================
 function initializeUISystem() {
-    console.log(`🚀 Initializing ByteWard UI v${UI_CONFIG.version}...`);
+    console.log(`🚀 Initializing ByteWard UI v${UI_CONFIG.version} (Production Ready)...`);
     
     try {
         // Inject CSS
@@ -1957,26 +2092,34 @@ function initializeUISystem() {
         // Initialize keyboard navigation
         initKeyboardNavigation();
         
-        // Create profile button if user is logged in
-        if (window.Auth?.currentUser) {
-            setTimeout(() => {
-                createProfileButton();
-                console.log('✅ Profile button created');
-            }, 1000);
-        }
-        
-        // Listen for auth state changes
-        if (window.Auth) {
-            const originalSetUserData = window.Auth.setUserData;
-            if (originalSetUserData) {
-                window.Auth.setUserData = function(data) {
-                    originalSetUserData.call(this, data);
-                    updateProfileButton();
-                };
+        // Setup auth monitoring
+        let authCheckInterval = setInterval(() => {
+            if (window.Auth) {
+                clearInterval(authCheckInterval);
+                
+                // Jika user login, buat profile button
+                if (window.Auth.currentUser) {
+                    setTimeout(() => {
+                        if (!document.getElementById('profileTrigger')) {
+                            createProfileButton();
+                        }
+                    }, 500);
+                }
+                
+                // Setup user data update listener
+                if (typeof window.Auth.setUserData === 'function') {
+                    const originalSetUserData = window.Auth.setUserData;
+                    window.Auth.setUserData = function(data) {
+                        const result = originalSetUserData.call(this, data);
+                        updateProfileButton();
+                        return result;
+                    };
+                }
             }
-        }
+        }, 100);
         
-        console.log('✅ ByteWard UI v2.0 successfully initialized');
+        console.log('✅ ByteWard UI v2.0 Production Ready initialized');
+        
     } catch (error) {
         console.error('❌ Failed to initialize UI System:', error);
     }
@@ -1998,24 +2141,47 @@ Object.assign(window.ByteWardUI, {
 });
 
 // =======================
-// BACKWARD COMPATIBILITY
+// AUTH STATE CHANGE HANDLER
 // =======================
-window.UI = window.UI || {};
-Object.assign(window.UI, {
-    createProfileButton,
-    updateProfileButton,
-    showProfilePanel,
-    hideProfilePanel,
-    saveProfile,
-    showStatus,
-    initialize: initializeUISystem
-});
-
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeUISystem);
-} else {
-    setTimeout(initializeUISystem, 100);
+function setupAuthListeners() {
+    // Monitor perubahan window.Auth.currentUser
+    let lastAuthState = null;
+    
+    const checkAuthState = setInterval(() => {
+        if (window.Auth && window.Auth.currentUser !== lastAuthState) {
+            lastAuthState = window.Auth.currentUser;
+            
+            if (window.Auth.currentUser) {
+                // User logged in - create profile button
+                setTimeout(() => {
+                    if (!document.getElementById('profileTrigger')) {
+                        createProfileButton();
+                    }
+                }, 500);
+            } else {
+                // User logged out - remove profile button
+                const profileBtn = document.querySelector('.profile-button-container');
+                if (profileBtn) {
+                    profileBtn.remove();
+                }
+            }
+        }
+    }, 1000);
 }
 
-console.log(`🎨 ByteWard UI Module v${UI_CONFIG.version} - Production Ready dengan Sistem Profil 3 Mode`);
+// =======================
+// STARTUP
+// =======================
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeUISystem();
+        setupAuthListeners();
+    });
+} else {
+    setTimeout(() => {
+        initializeUISystem();
+        setupAuthListeners();
+    }, 100);
+}
+
+console.log(`🎨 ByteWard UI Module v${UI_CONFIG.version} - Production Ready dengan Auth Integration`);
