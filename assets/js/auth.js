@@ -1,5 +1,5 @@
-// ByteWard Auth Module v0.5.1 - FIXED (No Infinite Loop)
-console.log('🔐 Memuat Auth Module v0.5.1 (Fixed)...');
+// ByteWard Auth Module v0.5.5 - Event-Driven Architecture
+console.log('🔐 Memuat Auth Module v0.5.5 - Event-Driven & UI-Safe');
 
 let currentUser = null;
 let userRole = null;
@@ -8,22 +8,21 @@ let authReady = false;
 let userProfileState = null;
 let profileListener = null;
 let isSystemInitialized = false;
+let authStateChangeTimeout = null;
+
+// ============================================
+// KONTRAK AUTH ⇄ UI v0.5.5
+// ============================================
+// Auth HANYA berkomunikasi ke UI melalui:
+// 1. UI.afterLogin()    - Saat login/session restore berhasil
+// 2. UI.afterLogout()   - Saat logout/unauthorized
+// 3. UI.hideAuthLoading() - SELALU dipanggil di finally
+// ============================================
 
 function generateDefaultAvatar(seed) {
     const defaultSeed = seed || 'user' + Date.now();
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultSeed)}&backgroundColor=6b7280`;
 }
-
-const PROFILE_AVATARS = [
-    { id: 'male1', name: 'Male Avatar 1', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=male1&backgroundColor=5b6af0&radius=50', color: '#5b6af0' },
-    { id: 'female1', name: 'Female Avatar 1', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=female1&backgroundColor=9d4edd&radius=50', color: '#9d4edd' },
-    { id: 'robot', name: 'Robot', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=robot&backgroundColor=10b981&radius=50', color: '#10b981' },
-    { id: 'cat', name: 'Cat', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=cat&backgroundColor=f59e0b&radius=50', color: '#f59e0b' },
-    { id: 'alien', name: 'Alien', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alien&backgroundColor=8b5cf6&radius=50', color: '#8b5cf6' },
-    { id: 'person1', name: 'Person 1', url: 'https://api.dicebear.com/7.x/personas/svg?seed=person1&backgroundColor=ef4444&radius=50', color: '#ef4444' },
-    { id: 'person2', name: 'Person 2', url: 'https://api.dicebear.com/7.x/personas/svg?seed=person2&backgroundColor=14b8a6&radius=50', color: '#14b8a6' },
-    { id: 'person3', name: 'Person 3', url: 'https://api.dicebear.com/7.x/personas/svg?seed=person3&backgroundColor=8b5cf6&radius=50', color: '#8b5cf6' }
-];
 
 function checkProfileCompleteness(data) {
     if (!data) return false;
@@ -33,12 +32,13 @@ function checkProfileCompleteness(data) {
 }
 
 // ============================================
-// PERBAIKAN UTAMA: fetchUserData
+// EVENT-DRIVEN USER DATA FETCH
 // ============================================
 async function fetchUserData(userId) {
     console.log('📡 Mengambil data user dari Firestore...');
 
     return new Promise((resolve, reject) => {
+        // Clean up previous listener
         if (profileListener) {
             profileListener();
             profileListener = null;
@@ -47,45 +47,67 @@ async function fetchUserData(userId) {
         const ref = firebaseDb.collection('users').doc(userId);
         let resolved = false;
 
+        // Safety timeout untuk mencegah stuck
+        const fetchTimeout = setTimeout(() => {
+            if (!resolved) {
+                console.warn('⚠️ Fetch user data timeout, menggunakan data default');
+                profileListener?.();
+                profileListener = null;
+                
+                const defaultData = {
+                    id: userId,
+                    nama: currentUser?.displayName || '',
+                    email: currentUser?.email || '',
+                    foto_profil: generateDefaultAvatar(currentUser?.email || userId),
+                    peran: 'siswa',
+                    profilLengkap: false
+                };
+                
+                userData = defaultData;
+                userRole = 'siswa';
+                userProfileState = {
+                    isProfileComplete: false,
+                    isLoading: false,
+                    hasChanges: false
+                };
+                
+                resolved = true;
+                resolve(defaultData);
+            }
+        }, 8000); // 8 detik timeout
+
         profileListener = ref.onSnapshot(async (snap) => {
             try {
+                clearTimeout(fetchTimeout);
+                
                 if (snap.exists) {
                     const data = snap.data();
                     
+                    // Ensure required fields
                     if (!data.nama) data.nama = '';
-                    if (!data.foto_profil) data.foto_profil = generateDefaultAvatar(data.email || userId);
+                    if (!data.foto_profil) {
+                        data.foto_profil = generateDefaultAvatar(data.email || userId);
+                    }
                     if (!data.peran) data.peran = 'siswa';
                     
                     userData = data;
-                    userRole = userData.peran || 'siswa';
+                    userRole = data.peran || 'siswa';
 
+                    // Initialize profile state if needed
                     if (!userProfileState) {
                         userProfileState = {
                             isProfileComplete: false,
-                            selectedAvatar: null,
-                            customAvatar: null,
-                            tempName: '',
                             isLoading: false,
-                            hasChanges: false,
-                            autoCloseTriggered: false
+                            hasChanges: false
                         };
                     }
                     
-                    userProfileState.isProfileComplete = userData.profilLengkap;
+                    // Update profile completeness
+                    userProfileState.isProfileComplete = checkProfileCompleteness(data);
 
                     if (!resolved) {
                         resolved = true;
-                        resolve(userData);
-                    }
-
-                    if (currentUser && window.UI) {
-                        window.UI.updateProfileButton();
-                        if (document.getElementById('profilePanel')) {
-                            const currentAvatar = document.querySelector('.current-avatar');
-                            const currentName = document.querySelector('.current-name');
-                            if (currentAvatar) currentAvatar.src = userData.foto_profil;
-                            if (currentName) currentName.textContent = userData.nama || 'Nama belum diisi';
-                        }
+                        resolve(data);
                     }
 
                 } else {
@@ -97,10 +119,12 @@ async function fetchUserData(userId) {
                     }
                 }
             } catch (error) {
+                clearTimeout(fetchTimeout);
                 console.error('Error in user data listener:', error);
                 if (!resolved) reject(error);
             }
         }, (error) => {
+            clearTimeout(fetchTimeout);
             console.error('Firestore listener error:', error);
             if (!resolved) reject(error);
         });
@@ -117,7 +141,7 @@ async function createUserData(userId) {
         email: user.email,
         foto_profil: generateDefaultAvatar(avatarSeed),
         peran: 'siswa',
-        profilLengkap: false, 
+        profilLengkap: false,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -126,21 +150,20 @@ async function createUserData(userId) {
     return payload;
 }
 
+// ============================================
+// AUTH ACTIONS - UI-SAFE
+// ============================================
 async function authLogin() {
     try {
         console.log('🔐 Memulai login Google...');
-        if (window.UI) window.UI.showAuthLoading('Membuka Google Login…');
-
+        
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('profile');
         provider.addScope('email');
 
         const result = await firebaseAuth.signInWithPopup(provider);
-
         console.log('✅ Login sukses:', result.user.email);
         
-        if (window.UI) window.UI.showAuthLoading('Login berhasil, menyiapkan sistem…');
-
         return result.user;
     } catch (error) {
         console.error('❌ Error login:', error);
@@ -152,15 +175,15 @@ async function authLogin() {
             errorMsg = 'Popup login diblokir oleh browser. Silakan izinkan popup.';
         }
 
-        if (window.UI) window.UI.hideAuthLoading();
         throw new Error(errorMsg);
     }
 }
 
 async function authLogout() {
     try {
-        if (window.UI) window.UI.showAuthLoading('Logout…');
-
+        console.log('🚪 Memulai logout...');
+        
+        // Clean up Firestore listener
         if (profileListener) {
             profileListener();
             profileListener = null;
@@ -168,26 +191,98 @@ async function authLogout() {
 
         await firebaseAuth.signOut();
         console.log('✅ Logout berhasil');
-
-        const profileContainer = document.querySelector('.profile-button-container');
-        if (profileContainer) profileContainer.remove();
-
-        const profilePanel = document.getElementById('profileOverlay');
-        if (profilePanel) profilePanel.remove();
-
-        currentUser = null;
-        userRole = null;
-        userData = null;
-        authReady = false;
-        userProfileState = null;
-
-        if (window.ByteWard) window.ByteWard.redirectAfterLogout();
+        
     } catch (error) {
         console.error('❌ Error logout:', error);
-        if (window.UI) window.UI.showError('Gagal logout.');
+        throw new Error('Gagal logout: ' + error.message);
     }
 }
 
+// ============================================
+// EVENT-DRIVEN AUTH STATE MANAGEMENT
+// ============================================
+async function handleAuthStateChange(user) {
+    try {
+        // Clear any existing timeout
+        if (authStateChangeTimeout) {
+            clearTimeout(authStateChangeTimeout);
+            authStateChangeTimeout = null;
+        }
+        
+        // Set safety timeout (10 detik)
+        authStateChangeTimeout = setTimeout(() => {
+            console.warn('⚠️ Auth state change timeout - forcing resolution');
+            authReady = true;
+            if (window.UI && window.UI.hideAuthLoading) {
+                window.UI.hideAuthLoading();
+            }
+        }, 10000);
+
+        if (user) {
+            console.log('👤 User terautentikasi:', user.email);
+            currentUser = user;
+            
+            try {
+                await fetchUserData(user.uid);
+                authReady = true;
+                
+                // Notify UI melalui lifecycle
+                if (window.UI && window.UI.afterLogin) {
+                    window.UI.afterLogin();
+                }
+                
+            } catch (fetchError) {
+                console.error('❌ Gagal fetch user data:', fetchError);
+                // Tetap set authReady agar UI tidak stuck
+                authReady = true;
+                
+                // Notify UI bahwa login gagal
+                if (window.UI && window.UI.hideAuthLoading) {
+                    window.UI.hideAuthLoading();
+                }
+                return;
+            }
+            
+        } else {
+            console.log('👤 User belum login');
+            currentUser = null;
+            userRole = null;
+            userData = null;
+            userProfileState = null;
+            authReady = true;
+            
+            // Notify UI melalui lifecycle
+            if (window.UI && window.UI.afterLogout) {
+                window.UI.afterLogout();
+            }
+        }
+        
+    } catch (err) {
+        console.error('❌ Auth flow error:', {
+            message: err.message,
+            code: err.code,
+            stack: err.stack
+        });
+        
+        // Fallback: selalu set authReady meski error
+        authReady = true;
+        
+    } finally {
+        // SELALU tutup loading dan clear timeout
+        if (authStateChangeTimeout) {
+            clearTimeout(authStateChangeTimeout);
+            authStateChangeTimeout = null;
+        }
+        
+        if (window.UI && window.UI.hideAuthLoading) {
+            window.UI.hideAuthLoading();
+        }
+    }
+}
+
+// ============================================
+// INITIALIZATION - EVENT-DRIVEN
+// ============================================
 async function initializeSystem() {
     if (isSystemInitialized) {
         console.log('⚠️ Auth System sudah diinisialisasi.');
@@ -195,110 +290,107 @@ async function initializeSystem() {
     }
     isSystemInitialized = true;
 
-    console.log('⚙️ Menginisialisasi ByteWard v0.5.1...');
+    console.log('⚙️ Menginisialisasi ByteWard Auth v0.5.5...');
 
     if (typeof firebase === 'undefined' || !firebase.auth) {
         console.error('❌ Firebase tidak tersedia');
-        if (window.UI) window.UI.hideAuthLoading();
+        if (window.UI && window.UI.hideAuthLoading) {
+            window.UI.hideAuthLoading();
+        }
         return;
     }
 
-    if (window.location.pathname.includes('404') || document.title.includes('404')) {
-        console.log('🔧 Deteksi halaman 404, memanggil handler...');
-        if (window.ByteWard) window.ByteWard.handle404Page();
-    }
-
-    if (window.UI) {
-        window.UI.showAuthLoading('Mengecek status autentikasi…');
-        window.UI.injectProfileCSS();
-    }
-
-    firebaseAuth.onAuthStateChanged(async (user) => {
-        try {
-            if (user) {
-                console.log('👤 User terautentikasi:', user.email);
-                currentUser = user;
-
-                if (window.UI) window.UI.showAuthLoading('Mengambil data pengguna…');
-                await fetchUserData(user.uid);
-
-                if (window.UI) window.UI.showAuthLoading('Memverifikasi akses halaman…');
-                const accessGranted = await (window.ByteWard ? window.ByteWard.checkPageAccess() : Promise.resolve(true));
-
-                if (!(window.ByteWard ? window.ByteWard.isLoginPage() : false) && accessGranted && window.UI) {
-                    window.UI.createProfileButton();
-                }
-
-                authReady = true;
-                if (window.UI) window.UI.hideAuthLoading();
-
-            } else {
-                console.log('👤 User belum login');
-                currentUser = null;
-                userRole = null;
-                userData = null;
-                userProfileState = null;
-                authReady = true;
-                if (window.UI) window.UI.hideAuthLoading();
-
-                if (!(window.ByteWard ? window.ByteWard.isLoginPage() : false) && (window.ByteWard ? window.ByteWard.isWithinAppScope() : true)) {
-                    if (window.ByteWard) window.ByteWard.redirectToLogin();
-                }
-            }
-        } catch (err) {
-            console.error('❌ Auth flow error DETAIL:', {
-                message: err.message,
-                code: err.code,
-                stack: err.stack
-            });
-
-            if (window.UI) window.UI.hideAuthLoading();
-        } finally {
-            if (window.UI) window.UI.hideAuthLoading();
+    try {
+        // Set up Firebase auth state observer (SATU-SATUNYA sumber kebenaran)
+        firebaseAuth.onAuthStateChanged(handleAuthStateChange);
+        console.log('✅ Auth observer berjalan - Event-Driven Ready');
+        
+    } catch (initError) {
+        console.error('❌ Gagal inisialisasi auth:', initError);
+        authReady = true;
+        
+        if (window.UI && window.UI.hideAuthLoading) {
+            window.UI.hideAuthLoading();
         }
-    });
-
-    console.log('✅ Auth observer berjalan');
+    }
 }
 
 function debugByteWard() {
-    console.log('=== ByteWard Debug Info v0.5.1 ===');
-    console.log('Current User:', currentUser);
+    console.log('=== ByteWard Debug Info v0.5.5 ===');
+    console.log('Current User:', currentUser?.email);
     console.log('User Role:', userRole);
     console.log('User Data:', userData);
     console.log('Profile Complete:', userProfileState?.isProfileComplete);
     console.log('Auth Ready:', authReady);
+    console.log('Profile Listener Active:', !!profileListener);
     console.log('==========================');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        if (typeof firebaseAuth === 'undefined') {
-            console.error('❌ Firebase belum siap');
-            return;
-        }
-        initializeSystem();
-    }, 300);
-});
-
+// ============================================
+// PUBLIC API - BACKWARD COMPATIBLE
+// ============================================
 window.Auth = {
+    // Core Functions
     authLogin,
     authLogout,
     fetchUserData,
     createUserData,
     initializeSystem,
     debugByteWard,
+    
+    // Helper Functions
     checkProfileCompleteness,
     generateDefaultAvatar,
-    PROFILE_AVATARS
+    
+    // UI Event Handler (untuk komunikasi dari UI ke Auth)
+    setUserData: function(data) {
+        userData = data;
+        // Update profile state
+        if (userProfileState) {
+            userProfileState.isProfileComplete = checkProfileCompleteness(data);
+        }
+    }
 };
 
+// Getters/Setters - Backward Compatible
 Object.defineProperties(window.Auth, {
-    currentUser: { get: () => currentUser, set: (value) => { currentUser = value; } },
-    userRole: { get: () => userRole, set: (value) => { userRole = value; } },
-    userData: { get: () => userData, set: (value) => { userData = value; } },
-    profileState: { get: () => userProfileState, set: (value) => { userProfileState = value; } },
-    authReady: { get: () => authReady, set: (value) => { authReady = value; } }
+    currentUser: { 
+        get: () => currentUser, 
+        set: (value) => { 
+            console.warn('⚠️ currentUser should only be set by Firebase auth state observer');
+            currentUser = value; 
+        } 
+    },
+    userRole: { 
+        get: () => userRole, 
+        set: (value) => { userRole = value; } 
+    },
+    userData: { 
+        get: () => userData, 
+        set: (value) => { userData = value; } 
+    },
+    profileState: { 
+        get: () => userProfileState, 
+        set: (value) => { userProfileState = value; } 
+    },
+    authReady: { 
+        get: () => authReady, 
+        set: (value) => { authReady = value; } 
+    }
 });
 
-console.log('🔐 Auth Module v0.5.1 - Fixed (No Loop).');
+// Initialize on DOM ready dengan timeout safety
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof firebaseAuth === 'undefined') {
+            console.error('❌ Firebase belum siap');
+            if (window.UI && window.UI.hideAuthLoading) {
+                window.UI.hideAuthLoading();
+            }
+            return;
+        }
+        initializeSystem();
+    }, 300);
+});
+
+console.log('🔐 Auth Module v0.5.5 - Event-Driven & UI-Safe Loaded');
