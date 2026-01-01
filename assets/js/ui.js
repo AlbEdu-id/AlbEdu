@@ -2035,4 +2035,123 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { UI: window.UI };
 }
 
+// =======================
+// LOGIN FLOW SUPPORT
+// =======================
+UI.handleLogin = async function() {
+    console.log('🔐 Memulai proses login...');
+    
+    // 1. SHOW LOADING
+    this.showAuthLoading('Membuka Google Login...');
+    
+    try {
+        // 2. CALL AUTH LOGIN
+        if (!window.Auth || !window.Auth.authLogin) {
+            throw new Error('Auth system tidak tersedia');
+        }
+        
+        await window.Auth.authLogin();
+        
+        // 3. Auth akan otomatis panggil UI.afterLogin()
+        // 4. Auth akan otomatis panggil UI.hideAuthLoading() di finally
+        
+        console.log('✅ Login flow selesai');
+        
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        
+        // Ensure loading hidden
+        this.hideAuthLoading();
+        
+        // Show error
+        this.showLoginError(error.message);
+        
+        throw error; // Re-throw untuk handling di caller
+    }
+};
+
+// Initialize UI system untuk login page juga
+UI.initializeForLogin = function() {
+    console.log('🔄 Menginisialisasi UI untuk login page');
+    
+    // Inject loading CSS jika belum
+    if (!document.querySelector('#loading-css')) {
+        const style = document.createElement('style');
+        style.id = 'loading-css';
+        style.textContent = `
+            .loading-indicator {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+                flex-direction: column;
+                backdrop-filter: blur(4px);
+                transition: opacity 0.3s ease;
+            }
+            .block-loader {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                height: 60px;
+            }
+            .block-block {
+                width: 12px;
+                height: 40px;
+                background: linear-gradient(to bottom, #3b82f6, #2563eb);
+                border-radius: 4px;
+                animation: block-bounce 1.8s ease-in-out infinite;
+                animation-delay: calc(var(--i) * 0.15s);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+            .block-block:nth-child(odd) {
+                background: linear-gradient(to bottom, #1d4ed8, #3b82f6);
+            }
+            .block-block:nth-child(3) { width: 14px; height: 45px; }
+            @keyframes block-bounce {
+                0%, 60%, 100% { transform: translateY(0); }
+                30% { transform: translateY(-15px); }
+            }
+            .loading-text {
+                margin-top: 30px;
+                color: #1e293b;
+                font-size: 16px;
+                font-weight: 500;
+                text-align: center;
+                max-width: 300px;
+                line-height: 1.5;
+            }
+            .progress-bar {
+                width: 200px;
+                height: 4px;
+                background: #e2e8f0;
+                border-radius: 2px;
+                margin-top: 20px;
+                overflow: hidden;
+            }
+            .progress-fill {
+                width: 40%;
+                height: 100%;
+                background: linear-gradient(90deg, #3b82f6, #2563eb);
+                border-radius: 2px;
+                animation: progress-shift 2s ease-in-out infinite;
+            }
+            @keyframes progress-shift {
+                0%, 100% { transform: translateX(-100%); }
+                50% { transform: translateX(200%); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    console.log('✅ UI siap untuk login page');
+};
+
 console.log('🎨 UI Module v0.5.4 - Production Ready with Auth System');
