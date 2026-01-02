@@ -1,5 +1,5 @@
-// ByteWard Auth Module v0.5.6 - Event-Driven dengan Base Path Fix
-console.log('🔐 Memuat Auth Module v0.5.6 - Event-Driven dengan Base Path Support');
+// ByteWard Auth Module v0.5.7 - Event-Driven dengan Base Path Fix
+console.log('🔐 Memuat Auth Module v0.5.7 - Event-Driven dengan Redirect Logic Fix');
 
 let currentUser = null;
 let userRole = null;
@@ -14,7 +14,7 @@ let authStateChangeTimeout = null;
 // CONFIGURATION - BASE PATH SUPPORT
 // ============================================
 const APP_CONFIG = {
-    BASE_PATH: '/AlbEdu/', // ✅ BASE PATH yang benar
+    BASE_PATH: '/AlbEdu/',
     LOGIN_PAGE: 'login.html',
     getLoginUrl: function() {
         return this.BASE_PATH + this.LOGIN_PAGE;
@@ -22,7 +22,7 @@ const APP_CONFIG = {
 };
 
 // ============================================
-// KONTRAK AUTH ⇄ UI v0.5.6
+// KONTRAK AUTH ⇄ UI v0.5.7
 // ============================================
 // Auth HANYA berkomunikasi ke UI melalui:
 // 1. UI.afterLogin()    - Saat login/session restore berhasil
@@ -51,13 +51,15 @@ function redirectToLogin() {
 }
 
 function isLoginPage() {
-    return window.location.pathname.includes(APP_CONFIG.LOGIN_PAGE);
+    const currentPath = window.location.pathname;
+    return currentPath.endsWith(APP_CONFIG.LOGIN_PAGE) || 
+           currentPath.includes(APP_CONFIG.LOGIN_PAGE);
 }
 
 function isWithinAppScope() {
     const currentPath = window.location.pathname;
-    return currentPath.startsWith(APP_CONFIG.BASE_PATH) && 
-           !currentPath.includes('login.html') &&
+    return currentPath.includes(APP_CONFIG.BASE_PATH) &&
+           !currentPath.includes(APP_CONFIG.LOGIN_PAGE) &&
            !currentPath.includes('404');
 }
 
@@ -249,14 +251,17 @@ async function handleAuthStateChange(user) {
                 await fetchUserData(user.uid);
                 authReady = true;
                 
-                // Cek jika di login page, redirect ke dashboard
+                // User sudah login, jika di login page redirect ke app
                 if (isLoginPage()) {
-                    console.log('🔄 Redirect dari login page ke dashboard...');
-                    // Ganti dengan path dashboard yang benar
-                    window.location.href = APP_CONFIG.BASE_PATH + 'dashboard.html';
-                    return;
+                    console.log('📍 User sudah login, redirect dari login page...');
+                    // Redirect ke base path (AlbEdu/)
+                    setTimeout(() => {
+                        window.location.href = APP_CONFIG.BASE_PATH;
+                    }, 100);
+                    return; // Stop execution
                 }
                 
+                // User di app page, panggil UI
                 if (window.UI && window.UI.afterLogin) {
                     window.UI.afterLogin();
                 }
@@ -279,15 +284,16 @@ async function handleAuthStateChange(user) {
             userProfileState = null;
             authReady = true;
             
-            // Cek jika perlu redirect ke login
+            // User logout, jika di app page redirect ke login
             if (isWithinAppScope() && !isLoginPage()) {
-                console.log('🔀 User logout, redirect ke login...');
+                console.log('📍 User logout, redirect ke login page...');
                 setTimeout(() => {
                     redirectToLogin();
-                }, 500); // Delay sedikit untuk UX
-                return;
+                }, 300);
+                return; // Stop execution
             }
             
+            // User sudah di login page atau non-app page
             if (window.UI && window.UI.afterLogout) {
                 window.UI.afterLogout();
             }
@@ -324,7 +330,7 @@ async function initializeSystem() {
     }
     isSystemInitialized = true;
 
-    console.log('⚙️ Menginisialisasi ByteWard Auth v0.5.6...');
+    console.log('⚙️ Menginisialisasi ByteWard Auth v0.5.7...');
     console.log('📁 Base Path:', APP_CONFIG.BASE_PATH);
 
     if (typeof firebase === 'undefined' || !firebase.auth) {
@@ -350,7 +356,7 @@ async function initializeSystem() {
 }
 
 function debugByteWard() {
-    console.log('=== ByteWard Debug Info v0.5.6 ===');
+    console.log('=== ByteWard Debug Info v0.5.7 ===');
     console.log('Base Path:', APP_CONFIG.BASE_PATH);
     console.log('Current Path:', window.location.pathname);
     console.log('Is Login Page:', isLoginPage());
@@ -379,7 +385,7 @@ window.Auth = {
     checkProfileCompleteness,
     generateDefaultAvatar,
     
-    // Path Functions (untuk UI jika perlu)
+    // Path Functions
     redirectToLogin,
     isLoginPage,
     getBasePath: () => APP_CONFIG.BASE_PATH,
@@ -433,4 +439,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
 });
 
-console.log('🔐 Auth Module v0.5.6 - Event-Driven dengan Base Path Fix');
+console.log('🔐 Auth Module v0.5.7 - Event-Driven dengan Base Path Fix');
