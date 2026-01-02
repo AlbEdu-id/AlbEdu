@@ -1362,16 +1362,19 @@ UI.Profile = {
                     window.UI.Toast.success('Berhasil logout!');
                 }
                 
-                // Redirect to login page
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 1500);
+                 // ✅ FIX DISINI:
+            if (window.Auth.redirectToLogin) {
+                window.Auth.redirectToLogin(); // Smart redirect
             } else {
-                throw new Error('Auth system tidak ditemukan');
+                window.location.href = '/AlbEdu/login.html'; // Fallback
             }
-        } catch (error) {
-            console.error('Logout error:', error);
-            UI.hideAuthLoading();
+            
+        } else {
+            throw new Error('Auth system tidak ditemukan');
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        UI.hideAuthLoading();
             
             if (window.UI.Toast) {
                 window.UI.Toast.error('Gagal logout: ' + (error.message || 'Terjadi kesalahan'));
