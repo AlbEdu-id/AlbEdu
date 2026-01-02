@@ -1,6 +1,9 @@
-// ByteWard Auth Module v0.5.7 - Event-Driven dengan Base Path Fix
-console.log('🔐 Memuat Auth Module v0.5.7 - Event-Driven dengan Redirect Logic Fix');
+// ByteWard Auth Module v0.5.6 - Complete Event-Driven with Smart Redirect
+console.log('🔐 Memuat Auth Module v0.5.6 - Event-Driven & Smart Redirect');
 
+// ============================================
+// STATE VARIABLES
+// ============================================
 let currentUser = null;
 let userRole = null;
 let userData = null;
@@ -11,25 +14,30 @@ let isSystemInitialized = false;
 let authStateChangeTimeout = null;
 
 // ============================================
-// CONFIGURATION - BASE PATH SUPPORT
+// APP CONFIGURATION
 // ============================================
 const APP_CONFIG = {
     BASE_PATH: '/AlbEdu/',
     LOGIN_PAGE: 'login.html',
+    
+    // Role-based redirect paths
+    getRoleRedirectPath: function(role) {
+        const paths = {
+            'siswa': 'ujian/index.html',
+            'admin': 'admin/index.html',
+            'guru': 'guru/index.html'
+        };
+        return this.BASE_PATH + (paths[role] || 'ujian/index.html');
+    },
+    
     getLoginUrl: function() {
         return this.BASE_PATH + this.LOGIN_PAGE;
     }
 };
 
 // ============================================
-// KONTRAK AUTH ⇄ UI v0.5.7
+// HELPER FUNCTIONS
 // ============================================
-// Auth HANYA berkomunikasi ke UI melalui:
-// 1. UI.afterLogin()    - Saat login/session restore berhasil
-// 2. UI.afterLogout()   - Saat logout/unauthorized
-// 3. UI.hideAuthLoading() - SELALU dipanggil di finally
-// ============================================
-
 function generateDefaultAvatar(seed) {
     const defaultSeed = seed || 'user' + Date.now();
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultSeed)}&backgroundColor=6b7280`;
@@ -42,29 +50,46 @@ function checkProfileCompleteness(data) {
     return hasName && hasAvatar;
 }
 
-// ============================================
-// PATH HELPER FUNCTIONS
-// ============================================
-function redirectToLogin() {
-    console.log('🔀 Redirect ke login page:', APP_CONFIG.getLoginUrl());
-    window.location.href = APP_CONFIG.getLoginUrl();
-}
-
 function isLoginPage() {
     const currentPath = window.location.pathname;
-    return currentPath.endsWith(APP_CONFIG.LOGIN_PAGE) || 
-           currentPath.includes(APP_CONFIG.LOGIN_PAGE);
+    const loginPath = APP_CONFIG.BASE_PATH + APP_CONFIG.LOGIN_PAGE;
+    return currentPath === loginPath || currentPath.endsWith('/' + APP_CONFIG.LOGIN_PAGE);
+}
+
+function redirectBasedOnRole(role) {
+    const redirectPath = APP_CONFIG.getRoleRedirectPath(role);
+    const currentPath = window.location.pathname;
+    
+    if (currentPath === redirectPath) {
+        console.log('✅ Sudah di halaman yang benar, tidak perlu redirect');
+        return false;
+    }
+    
+    console.log(`🔀 Redirect berdasarkan peran "${role}": ${redirectPath}`);
+    setTimeout(() => {
+        window.location.href = redirectPath;
+    }, 300);
+    return true;
+}
+
+function redirectToLogin() {
+    const currentPath = window.location.pathname;
+    const loginPath = APP_CONFIG.getLoginUrl();
+    
+    if (currentPath !== loginPath) {
+        console.log('🔀 Redirect ke login page:', loginPath);
+        window.location.href = loginPath;
+    }
 }
 
 function isWithinAppScope() {
     const currentPath = window.location.pathname;
-    return currentPath.includes(APP_CONFIG.BASE_PATH) &&
-           !currentPath.includes(APP_CONFIG.LOGIN_PAGE) &&
-           !currentPath.includes('404');
+    return currentPath.startsWith(APP_CONFIG.BASE_PATH) && 
+           !currentPath.includes(APP_CONFIG.LOGIN_PAGE);
 }
 
 // ============================================
-// EVENT-DRIVEN USER DATA FETCH
+// CORE AUTH FUNCTIONS
 // ============================================
 async function fetchUserData(userId) {
     console.log('📡 Mengambil data user dari Firestore...');
@@ -177,9 +202,6 @@ async function createUserData(userId) {
     return payload;
 }
 
-// ============================================
-// AUTH ACTIONS - UI-SAFE
-// ============================================
 async function authLogin() {
     try {
         console.log('🔐 Memulai login Google...');
@@ -225,7 +247,7 @@ async function authLogout() {
 }
 
 // ============================================
-// EVENT-DRIVEN AUTH STATE MANAGEMENT
+// EVENT-DRIVEN AUTH STATE HANDLER
 // ============================================
 async function handleAuthStateChange(user) {
     try {
@@ -234,7 +256,6 @@ async function handleAuthStateChange(user) {
             authStateChangeTimeout = null;
         }
         
-        // Safety timeout
         authStateChangeTimeout = setTimeout(() => {
             console.warn('⚠️ Auth state change timeout - forcing resolution');
             authReady = true;
@@ -251,17 +272,14 @@ async function handleAuthStateChange(user) {
                 await fetchUserData(user.uid);
                 authReady = true;
                 
-                // User sudah login, jika di login page redirect ke app
+                // SMART LOGIC: Hanya redirect jika di login page
                 if (isLoginPage()) {
-                    console.log('📍 User sudah login, redirect dari login page...');
-                    // Redirect ke base path (AlbEdu/)
-                    setTimeout(() => {
-                        window.location.href = APP_CONFIG.BASE_PATH;
-                    }, 100);
-                    return; // Stop execution
+                    console.log('📍 Di login page, redirect berdasarkan peran...');
+                    redirectBasedOnRole(userRole);
+                    return; // Keluar, tidak panggil UI.afterLogin()
                 }
                 
-                // User di app page, panggil UI
+                // Jika sudah di dalam app, hanya panggil UI.afterLogin()
                 if (window.UI && window.UI.afterLogin) {
                     window.UI.afterLogin();
                 }
@@ -284,16 +302,15 @@ async function handleAuthStateChange(user) {
             userProfileState = null;
             authReady = true;
             
-            // User logout, jika di app page redirect ke login
+            // SMART LOGIC: Hanya redirect jika di dalam app scope
             if (isWithinAppScope() && !isLoginPage()) {
-                console.log('📍 User logout, redirect ke login page...');
+                console.log('📍 Di dalam app tapi logout, redirect ke login...');
                 setTimeout(() => {
                     redirectToLogin();
-                }, 300);
-                return; // Stop execution
+                }, 500);
+                return; // Keluar, tidak panggil UI.afterLogout()
             }
             
-            // User sudah di login page atau non-app page
             if (window.UI && window.UI.afterLogout) {
                 window.UI.afterLogout();
             }
@@ -321,7 +338,7 @@ async function handleAuthStateChange(user) {
 }
 
 // ============================================
-// INITIALIZATION - EVENT-DRIVEN
+// SYSTEM INITIALIZATION
 // ============================================
 async function initializeSystem() {
     if (isSystemInitialized) {
@@ -330,8 +347,10 @@ async function initializeSystem() {
     }
     isSystemInitialized = true;
 
-    console.log('⚙️ Menginisialisasi ByteWard Auth v0.5.7...');
-    console.log('📁 Base Path:', APP_CONFIG.BASE_PATH);
+    console.log('⚙️ Menginisialisasi ByteWard Auth v0.5.6...');
+    console.log('📍 Current path:', window.location.pathname);
+    console.log('📍 Is login page:', isLoginPage());
+    console.log('📍 Base path:', APP_CONFIG.BASE_PATH);
 
     if (typeof firebase === 'undefined' || !firebase.auth) {
         console.error('❌ Firebase tidak tersedia');
@@ -343,7 +362,7 @@ async function initializeSystem() {
 
     try {
         firebaseAuth.onAuthStateChanged(handleAuthStateChange);
-        console.log('✅ Auth observer berjalan');
+        console.log('✅ Auth observer berjalan - Event-Driven Ready');
         
     } catch (initError) {
         console.error('❌ Gagal inisialisasi auth:', initError);
@@ -356,7 +375,7 @@ async function initializeSystem() {
 }
 
 function debugByteWard() {
-    console.log('=== ByteWard Debug Info v0.5.7 ===');
+    console.log('=== ByteWard Debug Info v0.5.6 ===');
     console.log('Base Path:', APP_CONFIG.BASE_PATH);
     console.log('Current Path:', window.location.pathname);
     console.log('Is Login Page:', isLoginPage());
@@ -366,6 +385,7 @@ function debugByteWard() {
     console.log('User Data:', userData);
     console.log('Profile Complete:', userProfileState?.isProfileComplete);
     console.log('Auth Ready:', authReady);
+    console.log('Profile Listener Active:', !!profileListener);
     console.log('==========================');
 }
 
@@ -388,7 +408,9 @@ window.Auth = {
     // Path Functions
     redirectToLogin,
     isLoginPage,
+    isWithinAppScope,
     getBasePath: () => APP_CONFIG.BASE_PATH,
+    getRoleRedirectPath: (role) => APP_CONFIG.getRoleRedirectPath(role),
     
     // UI Event Handler
     setUserData: function(data) {
@@ -399,13 +421,11 @@ window.Auth = {
     }
 };
 
+// Getters/Setters - Backward Compatible
 Object.defineProperties(window.Auth, {
     currentUser: { 
         get: () => currentUser, 
-        set: (value) => { 
-            console.warn('⚠️ currentUser should only be set by Firebase auth state observer');
-            currentUser = value; 
-        } 
+        set: (value) => { currentUser = value; } 
     },
     userRole: { 
         get: () => userRole, 
@@ -425,7 +445,9 @@ Object.defineProperties(window.Auth, {
     }
 });
 
-// Initialize on DOM ready
+// ============================================
+// AUTO-INITIALIZATION
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof firebaseAuth === 'undefined') {
@@ -439,4 +461,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
 });
 
-console.log('🔐 Auth Module v0.5.7 - Event-Driven dengan Base Path Fix');
+console.log('🔐 Auth Module v0.5.6 - Complete & Ready');
