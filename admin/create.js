@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const menuToggle = document.getElementById('menu-toggle');  
   const sidebar = document.querySelector('.sidebar');  
   const notificationBtn = document.querySelector('.notification-btn');  
-  const logoutBtn = document.querySelector('.logout-btn');  
+  const logoutBtn = document.getElementById('logout-btn-header'); // Diubah ID  
   const badge = document.querySelector('.badge');  
     
   // SIDEBAR ITEMS (semua: logo, menu, user profile)  
@@ -400,65 +400,79 @@ document.addEventListener('DOMContentLoaded', function() {
   });  
     
   /* =======================  
-     LOGOUT  
+     LOGOUT (DIPINDAH KE HEADER)  
   ======================= */  
-  logoutBtn.addEventListener('click', function() {  
-    this.style.transform = 'scale(0.95)';  
-    setTimeout(() => this.style.transform = '', 150);  
-      
-    // Efek konfirmasi dengan animasi  
-    const modal = document.createElement('div');  
-    modal.className = 'logout-modal';  
-    modal.innerHTML = `  
-      <div class="modal-content">  
-        <i class="fas fa-sign-out-alt"></i>  
-        <h3>Konfirmasi Logout</h3>  
-        <p>Apakah Anda yakin ingin keluar dari sistem?</p>  
-        <div class="modal-buttons">  
-          <button class="btn-cancel">Batal</button>  
-          <button class="btn-confirm">Keluar</button>  
-        </div>  
-      </div>  
-    `;  
-      
-    document.body.appendChild(modal);  
-      
-    // Animasi masuk modal  
-    setTimeout(() => {  
-      modal.style.opacity = '1';  
-      modal.style.transform = 'scale(1)';  
-    }, 10);  
-      
-    // Event listeners untuk modal  
-    modal.querySelector('.btn-cancel').addEventListener('click', function() {  
-      modal.style.opacity = '0';  
-      modal.style.transform = 'scale(0.8)';  
-      setTimeout(() => modal.remove(), 300);  
-    });  
-      
-    modal.querySelector('.btn-confirm').addEventListener('click', function() {  
-      modal.querySelector('.modal-content').innerHTML = `  
-        <i class="fas fa-check-circle" style="color:#10b981;font-size:48px;margin-bottom:20px;"></i>  
-        <h3>Berhasil Logout</h3>  
-        <p>Anda telah keluar dari sistem.</p>  
-      `;  
-        
-      setTimeout(() => {  
-        modal.style.opacity = '0';  
-        setTimeout(() => modal.remove(), 300);  
-        // window.location.href = 'login.html';  
-      }, 1500);  
-    });  
-      
-    // Klik di luar modal untuk tutup  
-    modal.addEventListener('click', function(e) {  
-      if (e.target === modal) {  
-        modal.style.opacity = '0';  
-        modal.style.transform = 'scale(0.8)';  
-        setTimeout(() => modal.remove(), 300);  
-      }  
-    });  
-  });  
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {  
+        this.style.transform = 'scale(0.95)';  
+        setTimeout(() => this.style.transform = '', 150);  
+          
+        // Efek konfirmasi dengan animasi  
+        const modal = document.createElement('div');  
+        modal.className = 'logout-modal';  
+        modal.innerHTML = `  
+          <div class="modal-content">  
+            <i class="fas fa-sign-out-alt"></i>  
+            <h3>Konfirmasi Logout</h3>  
+            <p>Apakah Anda yakin ingin keluar dari sistem?</p>  
+            <div class="modal-buttons">  
+              <button class="btn-cancel">Batal</button>  
+              <button class="btn-confirm">Keluar</button>  
+            </div>  
+          </div>  
+        `;  
+          
+        document.body.appendChild(modal);  
+          
+        // Animasi masuk modal  
+        setTimeout(() => {  
+          modal.style.opacity = '1';  
+          modal.style.transform = 'scale(1)';  
+        }, 10);  
+          
+        // Event listeners untuk modal  
+        modal.querySelector('.btn-cancel').addEventListener('click', function() {  
+          modal.style.opacity = '0';  
+          modal.style.transform = 'scale(0.8)';  
+          setTimeout(() => modal.remove(), 300);  
+        });  
+          
+        modal.querySelector('.btn-confirm').addEventListener('click', function() {  
+          modal.querySelector('.modal-content').innerHTML = `  
+            <i class="fas fa-check-circle" style="color:#10b981;font-size:48px;margin-bottom:20px;"></i>  
+            <h3>Berhasil Logout</h3>  
+            <p>Anda telah keluar dari sistem.</p>  
+          `;  
+            
+          setTimeout(() => {  
+            modal.style.opacity = '0';  
+            setTimeout(() => {
+                modal.remove();
+                // Panggil logout dari Auth system
+                if (window.Auth && window.Auth.authLogout) {
+                    window.Auth.authLogout().then(() => {
+                        showToast('Berhasil logout dari admin panel', 'success');
+                        setTimeout(() => {
+                            window.location.href = '../login.html';
+                        }, 1500);
+                    }).catch(err => {
+                        showToast('Gagal logout: ' + err.message, 'error');
+                    });
+                }
+            }, 300);  
+          }, 1500);  
+        });  
+          
+        // Klik di luar modal untuk tutup  
+        modal.addEventListener('click', function(e) {  
+          if (e.target === modal) {  
+            modal.style.opacity = '0';  
+            modal.style.transform = 'scale(0.8)';  
+            setTimeout(() => modal.remove(), 300);  
+          }  
+        });  
+    });
+  }
     
   /* =======================  
      RESIZE HANDLER  
@@ -653,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* =======================  
-   PROFIL ADMIN FUNCTIONALITY (SIMPLIFIED)  
+   PROFIL ADMIN FUNCTIONALITY (EDIT PROFIL VERSI SEDERHANA)  
 ======================= */  
 
 // Initialize Admin Profile
@@ -674,10 +688,7 @@ function initializeAdminProfile() {
         });
     }
     
-    // Load statistics (mock data for now)
-    loadAdminStatistics();
-    
-    // Setup event listeners (simplified)
+    // Setup event listeners
     setupProfileEventListeners();
 }
 
@@ -694,15 +705,6 @@ function updateAdminProfile(userData) {
     document.getElementById('admin-email').textContent = userData.email || 'admin@alb.edu';
     document.getElementById('admin-id').textContent = userData.id || 'ADM-001';
     
-    // Set join date (mock for now)
-    const joinDate = new Date();
-    joinDate.setMonth(joinDate.getMonth() - 2); // 2 months ago
-    document.getElementById('admin-join-date').textContent = joinDate.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-    
     // Set last login
     const lastLogin = new Date();
     document.getElementById('admin-last-login').textContent = lastLogin.toLocaleString('id-ID', {
@@ -712,44 +714,209 @@ function updateAdminProfile(userData) {
     });
 }
 
-// Load admin statistics (mock data)
-function loadAdminStatistics() {
-    // Mock data - in real app, fetch from API
-    const mockStats = {
-        totalExams: 24,
-        totalStudents: 156,
-        examsGraded: 187,
-        avgScore: 78.5
-    };
+// Setup event listeners for profile actions
+function setupProfileEventListeners() {
+    // Avatar Edit Button
+    document.getElementById('btn-avatar-edit')?.addEventListener('click', showAvatarPicker);
     
-    document.getElementById('total-exams').textContent = mockStats.totalExams;
-    document.getElementById('total-students').textContent = mockStats.totalStudents;
-    document.getElementById('exams-graded').textContent = mockStats.examsGraded;
-    document.getElementById('avg-score').textContent = mockStats.avgScore.toFixed(1);
+    // Edit Profile Button (Modal Edit Sederhana)
+    document.getElementById('btn-edit-profile')?.addEventListener('click', showEditProfileModal);
 }
 
-// Setup event listeners for profile actions (SIMPLIFIED - tanpa pengaturan profil)
-function setupProfileEventListeners() {
-    // Avatar Edit Button (sederhana - hanya toast info)
-    document.getElementById('btn-avatar-edit')?.addEventListener('click', () => {
-        showToast('Fitur edit avatar untuk admin akan segera hadir', 'info');
+// Show Edit Profile Modal (Sederhana)
+function showEditProfileModal() {
+    const modal = document.createElement('div');
+    modal.className = 'profile-modal';
+    modal.id = 'editProfileModal';
+    
+    const currentName = document.getElementById('admin-name').textContent;
+    const currentEmail = document.getElementById('admin-email').textContent;
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit"></i> Edit Profil Admin</h3>
+                <button class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editFullName">Nama Lengkap</label>
+                    <input type="text" id="editFullName" class="form-control" 
+                           value="${currentName}">
+                </div>
+                <div class="form-group">
+                    <label for="editAdminEmail">Email</label>
+                    <input type="email" id="editAdminEmail" class="form-control" 
+                           value="${currentEmail}">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" id="cancelEdit">Batal</button>
+                <button class="btn-modal btn-modal-save" id="saveEdit">Simpan Perubahan</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Animate in
+    setTimeout(() => {
+        modal.classList.add('active');
+        document.getElementById('editFullName').focus();
+    }, 10);
+    
+    // Event listeners
+    modal.querySelector('#closeEditModal').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('#cancelEdit').addEventListener('click', () => closeModal(modal));
+    
+    modal.querySelector('#saveEdit').addEventListener('click', () => {
+        const newName = document.getElementById('editFullName').value;
+        const newEmail = document.getElementById('editAdminEmail').value;
+        
+        if (!newName.trim()) {
+            showToast('Nama tidak boleh kosong', 'error');
+            return;
+        }
+        
+        // Update display
+        document.getElementById('admin-name').textContent = newName;
+        document.getElementById('admin-email').textContent = newEmail;
+        
+        // Update in Auth system if available
+        if (window.Auth && window.Auth.userData) {
+            window.Auth.userData.nama = newName;
+            window.Auth.userData.email = newEmail;
+            
+            // Update in Firestore if user is logged in
+            if (window.Auth.currentUser) {
+                firebase.firestore().collection('users').doc(window.Auth.currentUser.uid).update({
+                    nama: newName,
+                    email: newEmail,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    showToast('Profil berhasil diperbarui di database', 'success');
+                }).catch(err => {
+                    console.error('Error updating profile:', err);
+                    showToast('Gagal menyimpan ke database', 'error');
+                });
+            }
+        }
+        
+        showToast('Profil berhasil diperbarui', 'success');
+        closeModal(modal);
     });
     
-    // Logout Button
-    document.getElementById('btn-admin-logout')?.addEventListener('click', () => {
-        if (window.Auth && window.Auth.authLogout) {
-            window.Auth.authLogout().then(() => {
-                showToast('Berhasil logout dari admin panel', 'success');
-                setTimeout(() => {
-                    window.location.href = '../login.html';
-                }, 1500);
-            }).catch(err => {
-                showToast('Gagal logout: ' + err.message, 'error');
-            });
-        } else {
-            showToast('Fitur logout tidak tersedia', 'error');
-        }
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal);
     });
+}
+
+// Show Avatar Picker
+function showAvatarPicker() {
+    const modal = document.createElement('div');
+    modal.className = 'profile-modal';
+    modal.id = 'avatarPickerModal';
+    
+    // Generate avatars using same system as UI.Profile
+    const avatars = [];
+    const styles = ['adventurer', 'avataaars', 'big-ears', 'big-smile', 'bottts', 'croodles',
+                   'fun-emoji', 'icons', 'identicon', 'initials', 'micah', 'miniavs',
+                   'open-peeps', 'personas', 'pixel-art', 'shapes', 'thumbs'];
+    
+    for (let i = 1; i <= 12; i++) {
+        const style = styles[(i - 1) % styles.length];
+        avatars.push({
+            id: `admin-avatar${i}`,
+            url: `https://api.dicebear.com/7.x/${style}/svg?seed=Admin${i}&backgroundColor=0ea5e9`,
+            style: style
+        });
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> Pilih Avatar Baru</h3>
+                <button class="modal-close" id="closeAvatarModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #64748b; margin-bottom: 20px;">Pilih avatar untuk profil Anda:</p>
+                <div class="avatar-picker" id="avatarPicker">
+                    ${avatars.map((avatar, index) => `
+                        <div class="avatar-option ${index === 0 ? 'selected' : ''}" 
+                             data-avatar="${avatar.url}">
+                            <img src="${avatar.url}" alt="Avatar ${index + 1}">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" id="cancelAvatar">Batal</button>
+                <button class="btn-modal btn-modal-save" id="saveAvatar">Simpan Avatar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Animate in
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+    
+    // Event listeners
+    let selectedAvatar = avatars[0].url;
+    
+    modal.querySelectorAll('.avatar-option').forEach(option => {
+        option.addEventListener('click', () => {
+            modal.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            selectedAvatar = option.dataset.avatar;
+        });
+    });
+    
+    modal.querySelector('#closeAvatarModal').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('#cancelAvatar').addEventListener('click', () => closeModal(modal));
+    
+    modal.querySelector('#saveAvatar').addEventListener('click', () => {
+        // Update avatar display
+        const avatarElement = document.getElementById('admin-avatar');
+        avatarElement.innerHTML = `<img src="${selectedAvatar}" alt="Avatar Baru">`;
+        
+        // Update in Auth system if available
+        if (window.Auth && window.Auth.userData) {
+            window.Auth.userData.foto_profil = selectedAvatar;
+            
+            // Update in Firestore if user is logged in
+            if (window.Auth.currentUser) {
+                firebase.firestore().collection('users').doc(window.Auth.currentUser.uid).update({
+                    foto_profil: selectedAvatar,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    showToast('Avatar berhasil disimpan ke database', 'success');
+                }).catch(err => {
+                    console.error('Error updating avatar:', err);
+                    showToast('Gagal menyimpan avatar ke database', 'error');
+                });
+            }
+        }
+        
+        showToast('Avatar berhasil diubah', 'success');
+        closeModal(modal);
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal);
+    });
+}
+
+// Close Modal Helper
+function closeModal(modal) {
+    modal.classList.remove('active');
+    setTimeout(() => {
+        modal.remove();
+    }, 300);
 }
 
 // Toast Helper
