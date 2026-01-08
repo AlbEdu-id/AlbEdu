@@ -104,18 +104,108 @@
             
             <!-- Content Area -->
             <div class="content-area">
-                <!-- Tab Content: Profil Admin -->
+                <!-- Tab Content: Profil Admin Sesungguhnya -->
                 <div class="tab-content active" id="profil">
                     <div class="content-header">
                         <h2>Profil Admin</h2>
                         <p>Kelola informasi profil administrator Anda</p>
                     </div>
                     <div class="content-body">
-                        <div class="coming-soon">
-                            <i class="fas fa-user-circle"></i>
-                            <h3>Halaman Profil Admin</h3>
-                            <p>Halaman profil admin sedang dalam pengembangan. Fitur untuk mengelola profil administrator akan segera hadir.</p>
-                            <div class="pulse-animation"></div>
+                        <div class="admin-profile-card">
+                            <div class="profile-header-section">
+                                <div class="avatar-container">
+                                    <div class="profile-avatar" id="admin-avatar">
+                                        <!-- Avatar akan diisi oleh JavaScript -->
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="avatar-overlay">
+                                        <button class="btn-avatar-edit" id="btn-avatar-edit">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <h2 id="admin-name">Admin AlbEdu</h2>
+                                <p id="admin-email">admin@alb.edu</p>
+                                <div class="role-badge">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Administrator</span>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-details">
+                                <div class="detail-section">
+                                    <h3><i class="fas fa-info-circle"></i> Informasi Pribadi</h3>
+                                    <div class="detail-grid">
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-id-card"></i> ID Admin</label>
+                                            <p id="admin-id">ADM-001</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-calendar-alt"></i> Bergabung Sejak</label>
+                                            <p id="admin-join-date">1 Januari 2024</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-clock"></i> Terakhir Login</label>
+                                            <p id="admin-last-login">Hari ini, 10:30</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-globe"></i> Zona Waktu</label>
+                                            <p>WIB (GMT+7)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h3><i class="fas fa-chart-line"></i> Statistik Admin</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="total-exams">0</h4>
+                                                <p>Ujian Dibuat</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="total-students">0</h4>
+                                                <p>Siswa Aktif</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="exams-graded">0</h4>
+                                                <p>Ujian Dinilai</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="avg-score">0</h4>
+                                                <p>Rata-rata Nilai</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bagian Pengaturan Profil dihapus -->
+                                
+                                <div class="profile-actions">
+                                    <button class="btn-action btn-logout" id="btn-admin-logout">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
