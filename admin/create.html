@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#2563eb">
     
     <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="create.css">
     <link rel="stylesheet" href="../assets/css/notification.css">
     
     <!-- Firebase SDK -->
@@ -17,50 +17,408 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
-        <!-- load module (URUTAN PENTING) -->
-<script src="../assets/js/firebase.config.js"></script>
-<script src="../assets/js/notification.js"></script>
-<script src="../assets/js/ui.js"></script>
-<script src="../assets/js/auth.js"></script>
-<script src="../assets/js/byteward.js"></script>
+    <!-- Load modules (URUTAN PENTING) -->
+    <script src="../assets/js/firebase.config.js"></script>
+    <script src="../assets/js/notification.js"></script>
+    <script src="../assets/js/ui.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/byteward.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="development-container">
-        <div class="development-card">
-            <div class="development-icon">🛠️</div>
-            
-            <div class="development-message">
-                <h2>AlbEdu-Creates</h2>
-                <p>Halaman ini sedang dalam pengembangan 🤖</p>
-                <p>Sistem pembuatan konten edukasi.</p>
-                <p id="userInfo" style="margin-top: 10px; font-size: 14px; color: #666;"></p>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap sidebar-icon"></i>
+                <h2 class="sidebar-text">AlbEdu-Creates</h2>
             </div>
             
-            <div style="margin-top: 30px;">
-                <a href="index.html" class="back-button">Kembali ke Panel Admin</a>
-                <button onclick="window.Auth?.authLogout?.()" class="back-button" style="margin-left: 10px;">Logout</button>
-            </div>
-            
-            <div class="create-options" style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; max-width: 500px; margin-left: auto; margin-right: auto;">
-                <h3 style="margin-bottom: 15px;">Pilihan Pembuatan Konten:</h3>
-                <ul style="text-align: left; list-style-type: none; padding: 0;">
-                    <li style="padding: 10px; border-bottom: 1px solid #e2e8f0;">📝 Buat Ujian Baru</li>
-                    <li style="padding: 10px; border-bottom: 1px solid #e2e8f0;">📚 Buat Materi Pembelajaran</li>
-                    <li style="padding: 10px; border-bottom: 1px solid #e2e8f0;">👥 Kelola Pengguna</li>
-                    <li style="padding: 10px;">📊 Buat Laporan</li>
+            <nav class="menu">
+                <ul>
+                    <li class="menu-item sidebar-item active" data-tab="profil">
+                        <div class="menu-item-content">
+                            <i class="fas fa-user-circle sidebar-icon"></i>
+                            <span class="sidebar-text">Profil Admin</span>
+                        </div>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="buat-ujian">
+                        <div class="menu-item-content">
+                            <i class="fas fa-edit sidebar-icon"></i>
+                            <span class="sidebar-text">Buat Ujian</span>
+                        </div>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="data-hasil">
+                        <div class="menu-item-content">
+                            <i class="fas fa-chart-bar sidebar-icon"></i>
+                            <span class="sidebar-text">Data Hasil Siswa</span>
+                        </div>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="ujian-siswa">
+                        <div class="menu-item-content">
+                            <i class="fas fa-book sidebar-icon"></i>
+                            <span class="sidebar-text">Ujian Siswa</span>
+                        </div>
+                    </li>
                 </ul>
+            </nav>
+            
+            <div class="user-profile sidebar-item">
+                <div class="user-profile-content">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>Admin AlbEdu</h4>
+                        <p>Administrator</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard Admin</h1>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Tab Content: Profil Admin Sesungguhnya -->
+                <div class="tab-content active" id="profil">
+                    <div class="content-header">
+                        <h2>Profil Admin</h2>
+                        <p>Kelola informasi profil administrator Anda</p>
+                    </div>
+                    <div class="content-body">
+                        <div class="admin-profile-card">
+                            <div class="profile-header-section">
+                                <div class="avatar-container">
+                                    <div class="profile-avatar" id="admin-avatar">
+                                        <!-- Avatar akan diisi oleh JavaScript -->
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="avatar-overlay">
+                                        <button class="btn-avatar-edit" id="btn-avatar-edit">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <h2 id="admin-name">Admin AlbEdu</h2>
+                                <p id="admin-email">admin@alb.edu</p>
+                                <div class="role-badge">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Administrator</span>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-details">
+                                <div class="detail-section">
+                                    <h3><i class="fas fa-info-circle"></i> Informasi Pribadi</h3>
+                                    <div class="detail-grid">
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-id-card"></i> ID Admin</label>
+                                            <p id="admin-id">ADM-001</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-calendar-alt"></i> Bergabung Sejak</label>
+                                            <p id="admin-join-date">1 Januari 2024</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-clock"></i> Terakhir Login</label>
+                                            <p id="admin-last-login">Hari ini, 10:30</p>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label><i class="fas fa-globe"></i> Zona Waktu</label>
+                                            <p>WIB (GMT+7)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h3><i class="fas fa-chart-line"></i> Statistik Admin</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="total-exams">0</h4>
+                                                <p>Ujian Dibuat</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="total-students">0</h4>
+                                                <p>Siswa Aktif</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="exams-graded">0</h4>
+                                                <p>Ujian Dinilai</p>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 id="avg-score">0</h4>
+                                                <p>Rata-rata Nilai</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h3><i class="fas fa-cogs"></i> Pengaturan Profil</h3>
+                                    <div class="settings-grid">
+                                        <button class="setting-item" id="btn-edit-profile">
+                                            <i class="fas fa-user-edit"></i>
+                                            <span>Edit Profil</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <button class="setting-item" id="btn-change-password">
+                                            <i class="fas fa-key"></i>
+                                            <span>Ubah Password</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <button class="setting-item" id="btn-notification-settings">
+                                            <i class="fas fa-bell"></i>
+                                            <span>Pengaturan Notifikasi</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <button class="setting-item" id="btn-privacy">
+                                            <i class="fas fa-lock"></i>
+                                            <span>Privasi & Keamanan</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-actions">
+                                    <button class="btn-action btn-edit" id="btn-save-profile">
+                                        <i class="fas fa-save"></i>
+                                        <span>Simpan Perubahan</span>
+                                    </button>
+                                    <button class="btn-action btn-logout" id="btn-admin-logout">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Content: Buat Ujian -->
+                <div class="tab-content" id="buat-ujian">
+                    <div class="content-header">
+                        <h2>Buat Ujian</h2>
+                        <p>Buat dan kelola ujian untuk siswa</p>
+                    </div>
+                    <div class="content-body">
+                        <div class="coming-soon">
+                            <i class="fas fa-edit"></i>
+                            <h3>Halaman Buat Ujian</h3>
+                            <p>Halaman ini sedang dalam pengembangan. Fitur untuk membuat dan mengelola ujian akan segera hadir.</p>
+                            <div class="pulse-animation"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Content: Data Hasil -->
+                <div class="tab-content" id="data-hasil">
+                    <div class="content-header">
+                        <h2>Data Hasil Siswa</h2>
+                        <p>Lihat dan analisis hasil ujian siswa</p>
+                    </div>
+                    <div class="content-body">
+                        <div class="coming-soon">
+                            <i class="fas fa-chart-bar"></i>
+                            <h3>Halaman Data Hasil</h3>
+                            <p>Halaman ini sedang dalam pengembangan. Fitur untuk melihat dan menganalisis hasil ujian siswa akan segera hadir.</p>
+                            <div class="pulse-animation"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Content: Ujian Siswa -->
+                <div class="tab-content" id="ujian-siswa">
+                    <div class="content-header">
+                        <h2>Ujian Siswa</h2>
+                        <p>Kelola ujian yang sedang berlangsung</p>
+                    </div>
+                    <div class="content-body">
+                        <div class="coming-soon">
+                            <i class="fas fa-book"></i>
+                            <h3>Halaman Ujian Siswa</h3>
+                            <p>Halaman ini sedang dalam pengembangan. Fitur untuk mengelola ujian siswa akan segera hadir.</p>
+                            <div class="pulse-animation"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2024 AlbEdu. Semua hak dilindungi.</p>
+                <p>v1.0.0</p>
+            </footer>
+        </main>
     </div>
     
-    <script>
-        // Tampilkan info user jika tersedia
-        document.addEventListener('DOMContentLoaded', function() {
-            const userInfo = document.getElementById('userInfo');
-            if (window.Auth?.currentUser) {
-                userInfo.innerHTML = `Login sebagai: <strong>${window.Auth.currentUser.email}</strong> (Role: ${window.Auth.userRole || 'unknown'})`;
-            }
-        });
-    </script>
+    <!-- Script Utama -->
+    <script src="create.js"></script>
+    
+    <!-- Style tambahan untuk toast dan modal -->
+    <style>
+        .logout-modal {  
+            position: fixed;  
+            top: 0;  
+            left: 0;  
+            width: 100%;  
+            height: 100%;  
+            background: rgba(0, 0, 0, 0.5);  
+            display: flex;  
+            align-items: center;  
+            justify-content: center;  
+            z-index: 9999;  
+            opacity: 0;  
+            transform: scale(0.8);  
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
+        }  
+          
+        .modal-content {  
+            background: white;  
+            padding: 30px;  
+            border-radius: 16px;  
+            text-align: center;  
+            max-width: 400px;  
+            width: 90%;  
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);  
+        }  
+          
+        .modal-content i {  
+            font-size: 48px;  
+            color: #0ea5e9;  
+            margin-bottom: 20px;  
+        }  
+          
+        .modal-content h3 {  
+            color: #0c4a6e;  
+            margin-bottom: 10px;  
+        }  
+          
+        .modal-content p {  
+            color: #0369a1;  
+            margin-bottom: 25px;  
+        }  
+          
+        .modal-buttons {  
+            display: flex;  
+            gap: 15px;  
+            justify-content: center;  
+        }  
+          
+        .modal-buttons button {  
+            padding: 12px 24px;  
+            border-radius: 10px;  
+            border: none;  
+            font-weight: 600;  
+            cursor: pointer;  
+            transition: all 0.3s ease;  
+        }  
+          
+        .btn-cancel {  
+            background: #e0f2fe;  
+            color: #0369a1;  
+            border: 1px solid #7dd3fc;  
+        }  
+          
+        .btn-cancel:hover {  
+            background: #bae6fd;  
+            transform: translateY(-2px);  
+        }  
+          
+        .btn-confirm {  
+            background: linear-gradient(135deg, #0ea5e9, #38bdf8);  
+            color: white;  
+        }  
+          
+        .btn-confirm:hover {  
+            transform: translateY(-2px);  
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);  
+        }  
+          
+        .toast {  
+            position: fixed;  
+            bottom: 30px;  
+            right: 30px;  
+            background: white;  
+            padding: 15px 20px;  
+            border-radius: 10px;  
+            display: flex;  
+            align-items: center;  
+            gap: 12px;  
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);  
+            z-index: 9998;  
+            opacity: 0;  
+            transform: translateY(20px);  
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
+            border-left: 4px solid #0ea5e9;  
+        }  
+          
+        .toast-success {  
+            border-left-color: #10b981;  
+        }  
+          
+        .toast i {  
+            color: #0ea5e9;  
+            font-size: 20px;  
+        }  
+          
+        .toast-success i {  
+            color: #10b981;  
+        }  
+          
+        .toast span {  
+            color: #0c4a6e;  
+            font-weight: 500;  
+        }  
+          
+        @keyframes shake {  
+            0%, 100% { transform: translateX(0); }  
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }  
+            20%, 40%, 60%, 80% { transform: translateX(2px); }  
+        }
+    </style>
 </body>
 </html>
