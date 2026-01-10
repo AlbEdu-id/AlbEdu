@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buat Ujian - AlbEdu</title>
+    <meta name="description" content="AlbEdu - Sistem Pembuatan Ujian">
+    <meta name="theme-color" content="#2563eb">
+    
+    <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
+    <!-- Global Navigation CSS -->
+    <link rel="stylesheet" href="../../assets/css/navigasi.css">
+    <!-- Page Specific CSS -->
+    <link rel="stylesheet" href="../../assets/css/buat-ujian.css">
+    <link rel="stylesheet" href="../../assets/css/notification.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Global JS Modules -->
+    <script src="../../assets/js/firebase.config.js"></script>
+    <script src="../../assets/js/notification.js"></script>
+    <script src="../../assets/js/ui.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/byteward.js"></script>
+    <!-- Exam Creator Mock -->
+    <script src="../../assets/js/examcreater.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Page Load Animation -->
+    <div class="page-transition">
+        <div class="loader"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap sidebar-icon"></i>
+                <h2 class="sidebar-text">AlbEdu-Creates</h2>
+            </div>
+            
+            <nav class="menu">
+                <ul>
+                    <li class="menu-item sidebar-item" data-tab="profil">
+                        <a href="profile.html" class="menu-item-content">
+                            <i class="fas fa-user-circle sidebar-icon"></i>
+                            <span class="sidebar-text">Profil Admin</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item active" data-tab="buat-ujian">
+                        <a href="buat-ujian.html" class="menu-item-content">
+                            <i class="fas fa-edit sidebar-icon"></i>
+                            <span class="sidebar-text">Buat Ujian</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="data-hasil">
+                        <a href="data-hasil.html" class="menu-item-content">
+                            <i class="fas fa-chart-bar sidebar-icon"></i>
+                            <span class="sidebar-text">Data Hasil Siswa</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="ujian-siswa">
+                        <a href="ujian-siswa.html" class="menu-item-content">
+                            <i class="fas fa-book sidebar-icon"></i>
+                            <span class="sidebar-text">Ujian Siswa</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="user-profile sidebar-item">
+                <div class="user-profile-content">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>Admin AlbEdu</h4>
+                        <p>Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Buat Ujian</h1>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="logout-btn" id="logout-btn-header">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="content-header">
+                    <h2>Buat Ujian Baru</h2>
+                    <p>Buat dan kelola ujian untuk siswa dengan mudah</p>
+                </div>
+                <div class="content-body">
+                    <!-- Exam Creation Wizard -->
+                    <div class="exam-wizard">
+                        <!-- Step 1: Exam Details -->
+                        <div class="wizard-step active" id="step1">
+                            <div class="step-header">
+                                <div class="step-number active">1</div>
+                                <div class="step-info">
+                                    <h3>Detail Ujian</h3>
+                                    <p>Tentukan informasi dasar ujian</p>
+                                </div>
+                            </div>
+                            
+                            <div class="step-content">
+                                <form id="exam-details-form">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="exam-title">
+                                                <i class="fas fa-heading"></i> Judul Ujian
+                                            </label>
+                                            <input type="text" 
+                                                   id="exam-title" 
+                                                   class="form-control" 
+                                                   placeholder="Contoh: Ujian Matematika Kelas 10"
+                                                   required>
+                                            <small class="form-text">Masukkan judul yang jelas dan deskriptif</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-subject">
+                                                <i class="fas fa-book"></i> Mata Pelajaran
+                                            </label>
+                                            <select id="exam-subject" class="form-control" required>
+                                                <option value="">Pilih Mata Pelajaran</option>
+                                                <option value="matematika">Matematika</option>
+                                                <option value="fisika">Fisika</option>
+                                                <option value="kimia">Kimia</option>
+                                                <option value="biologi">Biologi</option>
+                                                <option value="bahasa-indonesia">Bahasa Indonesia</option>
+                                                <option value="bahasa-inggris">Bahasa Inggris</option>
+                                                <option value="sejarah">Sejarah</option>
+                                                <option value="geografi">Geografi</option>
+                                                <option value="ekonomi">Ekonomi</option>
+                                                <option value="sosiologi">Sosiologi</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-grade">
+                                                <i class="fas fa-graduation-cap"></i> Kelas/Tingkat
+                                            </label>
+                                            <select id="exam-grade" class="form-control" required>
+                                                <option value="">Pilih Kelas</option>
+                                                <option value="7">Kelas 7</option>
+                                                <option value="8">Kelas 8</option>
+                                                <option value="9">Kelas 9</option>
+                                                <option value="10">Kelas 10</option>
+                                                <option value="11">Kelas 11</option>
+                                                <option value="12">Kelas 12</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-type">
+                                                <i class="fas fa-tag"></i> Jenis Ujian
+                                            </label>
+                                            <select id="exam-type" class="form-control" required>
+                                                <option value="">Pilih Jenis Ujian</option>
+                                                <option value="ulangan-harian">Ulangan Harian</option>
+                                                <option value="uts">UTS (Ujian Tengah Semester)</option>
+                                                <option value="uas">UAS (Ujian Akhir Semester)</option>
+                                                <option value="try-out">Try Out</option>
+                                                <option value="quiz">Quiz</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-duration">
+                                                <i class="fas fa-clock"></i> Durasi (menit)
+                                            </label>
+                                            <input type="number" 
+                                                   id="exam-duration" 
+                                                   class="form-control" 
+                                                   min="5" 
+                                                   max="180" 
+                                                   value="90"
+                                                   required>
+                                            <small class="form-text">Durasi dalam menit (5-180 menit)</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-passing-grade">
+                                                <i class="fas fa-chart-line"></i> Nilai Kelulusan
+                                            </label>
+                                            <div class="input-with-unit">
+                                                <input type="number" 
+                                                       id="exam-passing-grade" 
+                                                       class="form-control" 
+                                                       min="0" 
+                                                       max="100" 
+                                                       value="65"
+                                                       required>
+                                                <span class="input-unit">%</span>
+                                            </div>
+                                            <small class="form-text">Nilai minimum untuk lulus (0-100%)</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="exam-description">
+                                            <i class="fas fa-align-left"></i> Deskripsi Ujian
+                                        </label>
+                                        <textarea id="exam-description" 
+                                                  class="form-control" 
+                                                  rows="4" 
+                                                  placeholder="Tambahkan deskripsi atau instruksi khusus untuk siswa..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Question Types -->
+                        <div class="wizard-step" id="step2">
+                            <div class="step-header">
+                                <div class="step-number">2</div>
+                                <div class="step-info">
+                                    <h3>Jenis Soal</h3>
+                                    <p>Tentukan jenis dan jumlah soal</p>
+                                </div>
+                            </div>
+                            
+                            <div class="step-content">
+                                <div class="question-types-grid">
+                                    <div class="question-type-card" data-type="pilihan-ganda">
+                                        <div class="type-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <h4>Pilihan Ganda</h4>
+                                        <p>Soal dengan beberapa pilihan jawaban</p>
+                                        <div class="type-controls">
+                                            <button type="button" class="btn-decrease">-</button>
+                                            <input type="number" value="20" min="0" max="100" class="type-count">
+                                            <button type="button" class="btn-increase">+</button>
+                                        </div>
+                                        <small>Bobot: <input type="number" value="1" min="0.1" step="0.1" class="type-weight"> poin</small>
+                                    </div>
+                                    
+                                    <div class="question-type-card" data-type="essay">
+                                        <div class="type-icon">
+                                            <i class="fas fa-pen-fancy"></i>
+                                        </div>
+                                        <h4>Essay</h4>
+                                        <p>Soal uraian atau penjelasan</p>
+                                        <div class="type-controls">
+                                            <button type="button" class="btn-decrease">-</button>
+                                            <input type="number" value="5" min="0" max="50" class="type-count">
+                                            <button type="button" class="btn-increase">+</button>
+                                        </div>
+                                        <small>Bobot: <input type="number" value="5" min="0.1" step="0.1" class="type-weight"> poin</small>
+                                    </div>
+                                    
+                                    <div class="question-type-card" data-type="true-false">
+                                        <div class="type-icon">
+                                            <i class="fas fa-balance-scale"></i>
+                                        </div>
+                                        <h4>Benar/Salah</h4>
+                                        <p>Pernyataan benar atau salah</p>
+                                        <div class="type-controls">
+                                            <button type="button" class="btn-decrease">-</button>
+                                            <input type="number" value="10" min="0" max="50" class="type-count">
+                                            <button type="button" class="btn-increase">+</button>
+                                        </div>
+                                        <small>Bobot: <input type="number" value="0.5" min="0.1" step="0.1" class="type-weight"> poin</small>
+                                    </div>
+                                    
+                                    <div class="question-type-card" data-type="matching">
+                                        <div class="type-icon">
+                                            <i class="fas fa-random"></i>
+                                        </div>
+                                        <h4>Menjodohkan</h4>
+                                        <p>Mencocokkan pasangan yang sesuai</p>
+                                        <div class="type-controls">
+                                            <button type="button" class="btn-decrease">-</button>
+                                            <input type="number" value="0" min="0" max="20" class="type-count">
+                                            <button type="button" class="btn-increase">+</button>
+                                        </div>
+                                        <small>Bobot: <input type="number" value="2" min="0.1" step="0.1" class="type-weight"> poin</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="question-summary">
+                                    <div class="summary-item">
+                                        <span>Total Soal:</span>
+                                        <strong id="total-questions">35</strong>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>Total Poin:</span>
+                                        <strong id="total-points">55.0</strong>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>Estimasi Waktu:</span>
+                                        <strong id="estimated-time">~ 75 menit</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Schedule & Settings -->
+                        <div class="wizard-step" id="step3">
+                            <div class="step-header">
+                                <div class="step-number">3</div>
+                                <div class="step-info">
+                                    <h3>Jadwal & Pengaturan</h3>
+                                    <p>Tentukan waktu dan pengaturan ujian</p>
+                                </div>
+                            </div>
+                            
+                            <div class="step-content">
+                                <div class="schedule-grid">
+                                    <div class="form-group">
+                                        <label for="exam-start-date">
+                                            <i class="fas fa-calendar-alt"></i> Tanggal Mulai
+                                        </label>
+                                        <input type="date" id="exam-start-date" class="form-control" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="exam-start-time">
+                                            <i class="fas fa-clock"></i> Waktu Mulai
+                                        </label>
+                                        <input type="time" id="exam-start-time" class="form-control" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="exam-end-date">
+                                            <i class="fas fa-calendar-alt"></i> Tanggal Selesai
+                                        </label>
+                                        <input type="date" id="exam-end-date" class="form-control" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="exam-end-time">
+                                            <i class="fas fa-clock"></i> Waktu Selesai
+                                        </label>
+                                        <input type="time" id="exam-end-time" class="form-control" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-section">
+                                    <h4><i class="fas fa-cog"></i> Pengaturan Lanjutan</h4>
+                                    
+                                    <div class="settings-grid">
+                                        <div class="setting-item">
+                                            <div class="setting-content">
+                                                <label for="shuffle-questions">
+                                                    <i class="fas fa-random"></i> Acak Soal
+                                                </label>
+                                                <p>Urutan soal berbeda untuk setiap siswa</p>
+                                            </div>
+                                            <div class="setting-control">
+                                                <label class="switch">
+                                                    <input type="checkbox" id="shuffle-questions" checked>
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-item">
+                                            <div class="setting-content">
+                                                <label for="show-results">
+                                                    <i class="fas fa-chart-bar"></i> Tampilkan Hasil
+                                                </label>
+                                                <p>Siswa dapat melihat nilai setelah ujian</p>
+                                            </div>
+                                            <div class="setting-control">
+                                                <label class="switch">
+                                                    <input type="checkbox" id="show-results" checked>
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-item">
+                                            <div class="setting-content">
+                                                <label for="allow-retake">
+                                                    <i class="fas fa-redo"></i> Izin Ulang
+                                                </label>
+                                                <p>Siswa boleh mengulang ujian</p>
+                                            </div>
+                                            <div class="setting-control">
+                                                <label class="switch">
+                                                    <input type="checkbox" id="allow-retake">
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-item">
+                                            <div class="setting-content">
+                                                <label for="time-limit">
+                                                    <i class="fas fa-stopwatch"></i> Batas Waktu Ketat
+                                                </label>
+                                                <p>Ujian berhenti otomatis saat waktu habis</p>
+                                            </div>
+                                            <div class="setting-control">
+                                                <label class="switch">
+                                                    <input type="checkbox" id="time-limit" checked>
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Wizard Navigation -->
+                        <div class="wizard-navigation">
+                            <button class="btn-wizard btn-prev" id="btn-prev">
+                                <i class="fas fa-arrow-left"></i> Sebelumnya
+                            </button>
+                            
+                            <div class="wizard-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="wizard-progress" style="width: 33%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    Langkah <span id="current-step">1</span> dari 3
+                                </div>
+                            </div>
+                            
+                            <button class="btn-wizard btn-next" id="btn-next">
+                                Selanjutnya <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button class="btn-wizard btn-create" id="btn-create-exam" style="display: none;">
+                                <i class="fas fa-check"></i> Buat Ujian
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="quick-stats">
+                        <div class="stats-card">
+                            <div class="stats-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="stats-content">
+                                <h3>12</h3>
+                                <p>Ujian Aktif</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card">
+                            <div class="stats-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stats-content">
+                                <h3>156</h3>
+                                <p>Siswa Terdaftar</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card">
+                            <div class="stats-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="stats-content">
+                                <h3>85%</h3>
+                                <p>Rata-rata Kelulusan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2024 AlbEdu. Semua hak dilindungi.</p>
+                <p>v1.0.0</p>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- Global Navigation JS -->
+    <script src="../../assets/js/navigasi.js"></script>
+    <!-- Page Specific JS -->
+    <script src="../../assets/js/buat-ujian.js"></script>
+</body>
+</html>

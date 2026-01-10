@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Siswa - AlbEdu</title>
+    <meta name="description" content="AlbEdu - Kelola Ujian Siswa">
+    <meta name="theme-color" content="#2563eb">
+    
+    <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
+    <!-- Global Navigation CSS -->
+    <link rel="stylesheet" href="../../assets/css/navigasi.css">
+    <!-- Page Specific CSS -->
+    <link rel="stylesheet" href="../../assets/css/ujian-siswa.css">
+    <link rel="stylesheet" href="../../assets/css/notification.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Global JS Modules -->
+    <script src="../../assets/js/firebase.config.js"></script>
+    <script src="../../assets/js/notification.js"></script>
+    <script src="../../assets/js/ui.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/byteward.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Page Load Animation -->
+    <div class="page-transition">
+        <div class="loader"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap sidebar-icon"></i>
+                <h2 class="sidebar-text">AlbEdu-Creates</h2>
+            </div>
+            
+            <nav class="menu">
+                <ul>
+                    <li class="menu-item sidebar-item" data-tab="profil">
+                        <a href="profile.html" class="menu-item-content">
+                            <i class="fas fa-user-circle sidebar-icon"></i>
+                            <span class="sidebar-text">Profil Admin</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="buat-ujian">
+                        <a href="buat-ujian.html" class="menu-item-content">
+                            <i class="fas fa-edit sidebar-icon"></i>
+                            <span class="sidebar-text">Buat Ujian</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="data-hasil">
+                        <a href="data-hasil.html" class="menu-item-content">
+                            <i class="fas fa-chart-bar sidebar-icon"></i>
+                            <span class="sidebar-text">Data Hasil Siswa</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item active" data-tab="ujian-siswa">
+                        <a href="ujian-siswa.html" class="menu-item-content">
+                            <i class="fas fa-book sidebar-icon"></i>
+                            <span class="sidebar-text">Ujian Siswa</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="user-profile sidebar-item">
+                <div class="user-profile-content">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>Admin AlbEdu</h4>
+                        <p>Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Ujian Siswa</h1>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="logout-btn" id="logout-btn-header">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="content-header">
+                    <h2>Kelola Ujian Siswa</h2>
+                    <p>Pantau dan kelola ujian yang sedang berlangsung</p>
+                </div>
+                <div class="content-body">
+                    <!-- Exam Tabs -->
+                    <div class="exam-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="berlangsung">
+                                <i class="fas fa-play-circle"></i>
+                                <span>Sedang Berlangsung</span>
+                                <span class="tab-badge">3</span>
+                            </button>
+                            <button class="tab-btn" data-tab="akan-datang">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Akan Datang</span>
+                                <span class="tab-badge">5</span>
+                            </button>
+                            <button class="tab-btn" data-tab="selesai">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Selesai</span>
+                                <span class="tab-badge">12</span>
+                            </button>
+                            <button class="tab-btn" data-tab="draft">
+                                <i class="fas fa-edit"></i>
+                                <span>Draft</span>
+                                <span class="tab-badge">2</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Active Exams Tab -->
+                        <div class="tab-content active" id="berlangsung">
+                            <!-- Exam Controls -->
+                            <div class="exam-controls">
+                                <div class="control-left">
+                                    <button class="btn-control btn-add-exam" id="btn-add-exam">
+                                        <i class="fas fa-plus"></i> Tambah Ujian
+                                    </button>
+                                    <button class="btn-control btn-bulk-action">
+                                        <i class="fas fa-tasks"></i> Aksi Massal
+                                    </button>
+                                </div>
+                                <div class="control-right">
+                                    <div class="search-box">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" placeholder="Cari ujian..." id="search-exam">
+                                    </div>
+                                    <button class="btn-control btn-refresh">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Active Exams Grid -->
+                            <div class="exams-grid">
+                                <!-- Exam Card 1 -->
+                                <div class="exam-card active">
+                                    <div class="exam-header">
+                                        <div class="exam-status active">
+                                            <i class="fas fa-play-circle"></i>
+                                            <span>Aktif</span>
+                                        </div>
+                                        <div class="exam-actions">
+                                            <button class="btn-action-small" title="Monitor">
+                                                <i class="fas fa-tv"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-body">
+                                        <h3 class="exam-title">Matematika Kelas 10 - UTS</h3>
+                                        <p class="exam-description">Ujian Tengah Semester Matematika untuk kelas 10</p>
+                                        
+                                        <div class="exam-meta">
+                                            <div class="meta-item">
+                                                <i class="fas fa-users"></i>
+                                                <span>45/50 Siswa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span>45m tersisa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-chart-line"></i>
+                                                <span>Rata-rata: 78</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="exam-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 90%"></div>
+                                            </div>
+                                            <div class="progress-text">90% selesai</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-footer">
+                                        <div class="exam-time">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>Berakhir: 15:30</span>
+                                        </div>
+                                        <button class="btn-exam-action btn-monitor">
+                                            <i class="fas fa-tv"></i> Monitor
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Exam Card 2 -->
+                                <div class="exam-card active">
+                                    <div class="exam-header">
+                                        <div class="exam-status active">
+                                            <i class="fas fa-play-circle"></i>
+                                            <span>Aktif</span>
+                                        </div>
+                                        <div class="exam-actions">
+                                            <button class="btn-action-small" title="Monitor">
+                                                <i class="fas fa-tv"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-body">
+                                        <h3 class="exam-title">Fisika Kelas 11 - Quiz</h3>
+                                        <p class="exam-description">Quiz bab kinematika gerak lurus</p>
+                                        
+                                        <div class="exam-meta">
+                                            <div class="meta-item">
+                                                <i class="fas fa-users"></i>
+                                                <span>32/35 Siswa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span>15m tersisa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-chart-line"></i>
+                                                <span>Rata-rata: 82</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="exam-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 65%"></div>
+                                            </div>
+                                            <div class="progress-text">65% selesai</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-footer">
+                                        <div class="exam-time">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>Berakhir: 14:45</span>
+                                        </div>
+                                        <button class="btn-exam-action btn-monitor">
+                                            <i class="fas fa-tv"></i> Monitor
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Exam Card 3 -->
+                                <div class="exam-card active">
+                                    <div class="exam-header">
+                                        <div class="exam-status active">
+                                            <i class="fas fa-play-circle"></i>
+                                            <span>Aktif</span>
+                                        </div>
+                                        <div class="exam-actions">
+                                            <button class="btn-action-small" title="Monitor">
+                                                <i class="fas fa-tv"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action-small" title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-body">
+                                        <h3 class="exam-title">Bahasa Inggris - Listening</h3>
+                                        <p class="exam-description">Tes listening comprehension</p>
+                                        
+                                        <div class="exam-meta">
+                                            <div class="meta-item">
+                                                <i class="fas fa-users"></i>
+                                                <span>28/30 Siswa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span>30m tersisa</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-chart-line"></i>
+                                                <span>Rata-rata: 75</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="exam-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 40%"></div>
+                                            </div>
+                                            <div class="progress-text">40% selesai</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="exam-footer">
+                                        <div class="exam-time">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>Berakhir: 16:00</span>
+                                        </div>
+                                        <button class="btn-exam-action btn-monitor">
+                                            <i class="fas fa-tv"></i> Monitor
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Monitoring Panel -->
+                            <div class="monitoring-panel">
+                                <div class="panel-header">
+                                    <h3><i class="fas fa-tv"></i> Monitoring Live</h3>
+                                    <div class="panel-actions">
+                                        <button class="btn-panel-action btn-pause">
+                                            <i class="fas fa-pause"></i> Jeda
+                                        </button>
+                                        <button class="btn-panel-action btn-end">
+                                            <i class="fas fa-stop"></i> Akhiri
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="panel-body">
+                                    <div class="monitoring-stats">
+                                        <div class="monitoring-stat">
+                                            <div class="stat-value">45</div>
+                                            <div class="stat-label">Total Siswa</div>
+                                        </div>
+                                        <div class="monitoring-stat">
+                                            <div class="stat-value">41</div>
+                                            <div class="stat-label">Sedang Mengerjakan</div>
+                                        </div>
+                                        <div class="monitoring-stat">
+                                            <div class="stat-value">3</div>
+                                            <div class="stat-label">Telah Selesai</div>
+                                        </div>
+                                        <div class="monitoring-stat">
+                                            <div class="stat-value">1</div>
+                                            <div class="stat-label">Belum Mulai</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="activity-feed">
+                                        <h4>Aktivitas Terbaru</h4>
+                                        <div class="activity-list">
+                                            <div class="activity-item">
+                                                <div class="activity-icon">
+                                                    <i class="fas fa-user-check"></i>
+                                                </div>
+                                                <div class="activity-content">
+                                                    <strong>Ahmad Sanusi</strong> menyelesaikan ujian
+                                                    <span class="activity-time">2 menit lalu</span>
+                                                </div>
+                                            </div>
+                                            <div class="activity-item">
+                                                <div class="activity-icon">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </div>
+                                                <div class="activity-content">
+                                                    <strong>Budi Santoso</strong> keluar dari ujian
+                                                    <span class="activity-time">5 menit lalu</span>
+                                                </div>
+                                            </div>
+                                            <div class="activity-item">
+                                                <div class="activity-icon">
+                                                    <i class="fas fa-redo"></i>
+                                                </div>
+                                                <div class="activity-content">
+                                                    <strong>Citra Dewi</strong> mengulang soal
+                                                    <span class="activity-time">8 menit lalu</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upcoming Exams Tab -->
+                        <div class="tab-content" id="akan-datang">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <h3>Belum Ada Ujian Akan Datang</h3>
+                                <p>Jadwalkan ujian baru untuk memulai</p>
+                                <button class="btn-primary" id="btn-schedule-exam">
+                                    <i class="fas fa-plus"></i> Jadwalkan Ujian
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Completed Exams Tab -->
+                        <div class="tab-content" id="selesai">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h3>Tidak Ada Ujian Selesai</h3>
+                                <p>Hasil ujian yang selesai akan muncul di sini</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Draft Exams Tab -->
+                        <div class="tab-content" id="draft">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <h3>Tidak Ada Draft Ujian</h3>
+                                <p>Buat draft ujian untuk disimpan dan diedit nanti</p>
+                                <button class="btn-primary" id="btn-create-draft">
+                                    <i class="fas fa-plus"></i> Buat Draft
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Pengumuman</h4>
+                                <p>Buat pengumuman untuk siswa</p>
+                                <button class="btn-action-small">
+                                    <i class="fas fa-plus"></i> Buat
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Jadwal Ulang</h4>
+                                <p>Atur ulang jadwal ujian</p>
+                                <button class="btn-action-small">
+                                    <i class="fas fa-calendar"></i> Atur
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Analisis Cepat</h4>
+                                <p>Lihat statistik ujian</p>
+                                <button class="btn-action-small">
+                                    <i class="fas fa-chart-line"></i> Lihat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2024 AlbEdu. Semua hak dilindungi.</p>
+                <p>v1.0.0</p>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- Global Navigation JS -->
+    <script src="../../assets/js/navigasi.js"></script>
+    <!-- Page Specific JS -->
+    <script src="../../assets/js/ujian-siswa.js"></script>
+</body>
+</html>

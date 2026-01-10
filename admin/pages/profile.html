@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Admin - AlbEdu</title>
+    <meta name="description" content="AlbEdu - Sistem Manajemen Pembelajaran">
+    <meta name="theme-color" content="#2563eb">
+    
+    <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
+    <!-- Global Navigation CSS -->
+    <link rel="stylesheet" href="../../assets/css/navigasi.css">
+    <!-- Page Specific CSS -->
+    <link rel="stylesheet" href="../../assets/css/profile2.css">
+    <link rel="stylesheet" href="../../assets/css/notification.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Global JS Modules -->
+    <script src="../../assets/js/firebase.config.js"></script>
+    <script src="../../assets/js/notification.js"></script>
+    <script src="../../assets/js/ui.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/byteward.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Page Load Animation -->
+    <div class="page-transition">
+        <div class="loader"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap sidebar-icon"></i>
+                <h2 class="sidebar-text">AlbEdu-Creates</h2>
+            </div>
+            
+            <nav class="menu">
+                <ul>
+                    <li class="menu-item sidebar-item active" data-tab="profil">
+                        <a href="profile.html" class="menu-item-content">
+                            <i class="fas fa-user-circle sidebar-icon"></i>
+                            <span class="sidebar-text">Profil Admin</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="buat-ujian">
+                        <a href="buat-ujian.html" class="menu-item-content">
+                            <i class="fas fa-edit sidebar-icon"></i>
+                            <span class="sidebar-text">Buat Ujian</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="data-hasil">
+                        <a href="data-hasil.html" class="menu-item-content">
+                            <i class="fas fa-chart-bar sidebar-icon"></i>
+                            <span class="sidebar-text">Data Hasil Siswa</span>
+                        </a>
+                    </li>
+                    <li class="menu-item sidebar-item" data-tab="ujian-siswa">
+                        <a href="ujian-siswa.html" class="menu-item-content">
+                            <i class="fas fa-book sidebar-icon"></i>
+                            <span class="sidebar-text">Ujian Siswa</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="user-profile sidebar-item">
+                <div class="user-profile-content">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>Admin AlbEdu</h4>
+                        <p>Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Profil Admin</h1>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="logout-btn" id="logout-btn-header">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="content-header">
+                    <h2>Profil Admin</h2>
+                    <p>Kelola informasi profil administrator Anda</p>
+                </div>
+                <div class="content-body">
+                    <div class="admin-profile-card">
+                        <div class="profile-header-section">
+                            <div class="avatar-container">
+                                <div class="profile-avatar" id="admin-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="avatar-overlay">
+                                    <button class="btn-avatar-edit" id="btn-avatar-edit">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h2 id="admin-name">Admin AlbEdu</h2>
+                            <p id="admin-email">admin@alb.edu</p>
+                            <div class="role-badge">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Administrator</span>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-details">
+                            <div class="detail-section">
+                                <h3><i class="fas fa-info-circle"></i> Informasi Pribadi</h3>
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-id-card"></i> ID Admin</label>
+                                        <p id="admin-id">ADM-001</p>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-clock"></i> Terakhir Login</label>
+                                        <p id="admin-last-login">Hari ini, 10:30</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tombol Edit Profil -->
+                            <div class="profile-actions">
+                                <button class="btn-action btn-edit" id="btn-edit-profile">
+                                    <i class="fas fa-user-edit"></i>
+                                    <span>Edit Profil</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2024 AlbEdu. Semua hak dilindungi.</p>
+                <p>v1.0.0</p>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- Global Navigation JS -->
+    <script src="../../assets/js/navigasi.js"></script>
+    <!-- Page Specific JS -->
+    <script src="../../assets/js/profile.js"></script>
+</body>
+</html>
